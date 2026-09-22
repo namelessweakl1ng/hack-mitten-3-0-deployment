@@ -1,0 +1,152 @@
+import { z } from "zod";
+
+export const memberSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
+  email: z
+    .string()
+    .email("Invalid email")
+    .refine((v) => v.toLowerCase().endsWith("@gmail.com"), "Email must be a @gmail.com address"),
+  phone: z
+    .string()
+    .min(10, "Phone must be exactly 10 digits")
+    .max(10, "Phone must be exactly 10 digits")
+    .regex(/^\d{10}$/, "Phone must be exactly 10 digits (numbers only)"),
+  college: z.string().min(2, "College name required").max(150),
+  degree: z.string().max(60).optional().or(z.literal("")),
+  isLeader: z.boolean().default(false),
+});
+
+export const registrationSchema = z
+  .object({
+    teamName: z
+      .string()
+      .min(2, "Team name must be at least 2 characters")
+      .max(60, "Team name too long")
+      .regex(/^[a-zA-Z0-9 _\-.]+$/, "Team name has invalid characters"),
+    college: z.string().max(150).optional().or(z.literal("")),
+    members: z.array(memberSchema).min(3, "Minimum 3 members required").max(4, "Maximum 4 members allowed"),
+  })
+  .superRefine((data, ctx) => {
+    // Exactly ONE team leader
+    const leaderCount = data.members.filter((m) => m.isLeader).length;
+    if (leaderCount === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["members"],
+        message: "Exactly one team leader is required",
+      });
+    } else if (leaderCount > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["members"],
+        message: "Only one team leader is allowed",
+      });
+    }
+    // Prevent duplicate member emails within the team
+    const emails = data.members.map((m) => m.email.toLowerCase().trim());
+    const seen = new Set<string>();
+    emails.forEach((email, idx) => {
+      if (seen.has(email)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["members", idx, "email"],
+          message: "Duplicate email within team",
+        });
+      }
+      seen.add(email);
+    });
+  });
+
+export const paymentSubmissionSchema = z.object({
+  transactionId: z
+    .string()
+    .min(4, "Transaction ID too short")
+    .max(100, "Transaction ID too long"),
+});
+
+export const rejectionSchema = z.object({
+  reason: z.string().min(3, "Reason required").max(500),
+});
+
+export const foodCheckInSchema = z.object({
+  qrToken: z.string().min(8, "Invalid QR token").max(80),
+  mealId: z.string().min(1),
+});
+
+export const loginSchema = z.object({
+  identifier: z.string().min(1, "Username or email required"), // accepts username OR email
+  password: z.string().min(1, "Password required"),
+});
+
+// ─── BERSERK recovery & password change ────────────────────────────────────
+
+export const passwordChangeSchema = z
+  .object({
+    newUsername: z.string().min(4, "Username must be at least 4 characters").max(60).regex(/^[a-zA-Z0-9_.\-]+$/, "Username has invalid characters"),
+    newPassword: z.string().min(12, "Password must be at least 12 characters").max(200),
+    recoveryKey: z.string().min(10, "Recovery key required"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.newPassword.toLowerCase() === "change-me" || data.newPassword === "password") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["newPassword"], message: "Password is too weak" });
+    }
+  });
+
+export const phaseSchema = z.object({
+  name: z.string().min(2).max(100),
+  description: z.string().max(500).optional(),
+  startDate: z.string().min(1),
+  startTime: z.string().min(1),
+  endDate: z.string().optional(),
+  endTime: z.string().optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+export const sponsorSchema = z.object({
+  name: z.string().min(2).max(100),
+  websiteUrl: z.string().url().optional().or(z.literal("")),
+  tier: z.enum(["TITLE", "PLATINUM", "GOLD", "SILVER", "PARTNER", "CUSTOM"]).default("PARTNER"),
+  customTier: z.string().max(60).optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+export const winnerSchema = z.object({
+  position: z.number().int().min(0).max(99),
+  positionLabel: z.string().min(1).max(60),
+  teamName: z.string().min(2).max(100),
+  prize: z.string().max(60).optional(),
+  description: z.string().max(500).optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+export const mealSchema = z.object({
+  type: z.enum(["BREAKFAST", "LUNCH", "SNACKS", "DINNER", "CUSTOM"]).default("CUSTOM"),
+  label: z.string().min(1).max(60),
+  date: z.string().optional(),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  enabled: z.boolean().default(true),
+});
+
+export const galleryItemSchema = z.object({
+  title: z.string().min(1).max(100),
+  caption: z.string().max(200).optional(),
+  year: z.string().min(1).max(20),
+  sortOrder: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+export type RegistrationInput = z.infer<typeof registrationSchema>;
+export type MemberInput = z.infer<typeof memberSchema>;
+export type PaymentSubmissionInput = z.infer<typeof paymentSubmissionSchema>;
+export type FoodCheckInInput = z.infer<typeof foodCheckInSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
+export type PhaseInput = z.infer<typeof phaseSchema>;
+export type SponsorInput = z.infer<typeof sponsorSchema>;
+export type WinnerInput = z.infer<typeof winnerSchema>;
+export type MealInput = z.infer<typeof mealSchema>;
+export type GalleryItemInput = z.infer<typeof galleryItemSchema>;

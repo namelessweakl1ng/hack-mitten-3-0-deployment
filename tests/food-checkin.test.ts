@@ -20,11 +20,18 @@ import { PrismaClient, RegistrationStatus, PaymentStatus, MealType, Role } from 
 import bcrypt from "bcryptjs";
 import { generateQrToken } from "../src/lib/constants";
 
-const dbUrl = process.env.DATABASE_URL ?? "";
-const hasPostgres = dbUrl.startsWith("postgresql://") || dbUrl.startsWith("postgres://");
+const dbUrl = process.env.TEST_DATABASE_URL ?? "";
+const hasPostgres =
+  dbUrl.startsWith("postgresql://") || dbUrl.startsWith("postgres://");
 
 describe.skipIf(!hasPostgres)("duplicate food check-in prevention", () => {
-  const db = new PrismaClient();
+  const db = new PrismaClient({
+    datasources: {
+      db: {
+        url: dbUrl,
+      },
+    },
+  });
 
   afterAll(async () => {
     await db.$disconnect();

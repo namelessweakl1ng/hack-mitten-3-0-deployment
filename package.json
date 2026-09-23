@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
     "db:generate": "prisma generate",
@@ -12,7 +12,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
     "db:seed": "bun run prisma/seed.ts",
-    "db:seed:demo": "bun run prisma/seed-demo.ts"
+    "db:seed:demo": "bun run prisma/seed-demo.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",

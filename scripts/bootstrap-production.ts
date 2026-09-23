@@ -1,6 +1,13 @@
 import { db } from "../src/lib/db";
+import bcrypt from "bcryptjs";
+import { generateBerserkSecret } from "../src/lib/constants";
 import { ensureSingletonEventConfig } from "../src/lib/bootstrap";
 import { ensureOperationalUser, readCredentialGroup } from "../src/lib/operational-users";
+
+function optional(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value || undefined;
+}
 
 async function main() {
   const admin = readCredentialGroup(process.env, "ADMIN");
@@ -8,6 +15,15 @@ async function main() {
 
   const eventConfig = await ensureSingletonEventConfig();
   const superAdmin = await ensureOperationalUser({ ...admin, name: "Super Admin", role: "SUPER_ADMIN" });
+
+  const recoverySecret = optional("HM3_BERSERK_SECRET") ?? generateBerserkSecret(48);
+  await db.user.update({
+    where: { id: superAdmin.id },
+    data: { recoveryHash: await bcrypt.hash(recoverySecret, 12) },
+  });
+  if (!process.env.HM3_BERSERK_SECRET) {
+    console.warn("HM3_BERSERK_SECRET is not configured; generated recovery credentials were not persisted.");
+  }
 
   console.log(`Production bootstrap complete: EventConfig=${eventConfig.id}, SUPER_ADMIN=${superAdmin.username}`);
 

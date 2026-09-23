@@ -48,7 +48,7 @@ Copy `.env.example` to `.env` and fill in real values. See
 - `BLOB_READ_WRITE_TOKEN`, `BLOB_STORE_ID` — Vercel Blob (required for file uploads in prod)
 
 Optional: `COORDINATOR_*`, `FOOD_ADMIN_*`, `EMAIL_API_URL`, `EMAIL_API_KEY`,
-`EMAIL_FROM`.
+`EMAIL_FROM` (a verified sender address; required in production).
 
 > The seed scripts read from `process.env` only. They never write to
 > `.env.local` or any file.

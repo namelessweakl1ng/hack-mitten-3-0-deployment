@@ -4,9 +4,8 @@
  * Sends the team leader's approval email when their team is approved.
  *
  * Provider priority:
- *   1. Resend — if RESEND_API_KEY env var is present, use Resend to send real emails.
- *   Removed: generic HTTP fallback — if EMAIL_API_URL is present, POST the payload there.
- *   3. Dev mode — log the email to the console.
+ *   1. Resend in production.
+ *   2. Console logging in local development only.
  *
  * Always returns { success, message, provider } for tracking.
  */
@@ -21,21 +20,39 @@ interface EmailPayload {
 export interface EmailResult {
   success: boolean;
   message: string;
-  provider: "resend" | "console";
+  provider: "resend" | "console" | "configuration";
 }
 
 /**
- * Send an email. Falls back to console logging if no email API is configured.
+ * Send an email. Production requires both Resend and a configured sender.
  */
 export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
-  // ─── Provider 1: Resend ──────────────────────────────────────────────
+  const isProduction = process.env.NODE_ENV === "production";
   const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
+  const fromAddress = process.env.EMAIL_FROM?.trim();
+
+  if (!resendApiKey) {
+    if (isProduction) {
+      return { success: false, message: "RESEND_API_KEY is not configured in production", provider: "configuration" };
+    }
+    console.log("[email] development console fallback", { to: payload.to, subject: payload.subject });
+    return { success: true, message: "Email logged in development (RESEND_API_KEY not configured)", provider: "console" };
+  }
+
+  if (!fromAddress) {
+    if (isProduction) {
+      return { success: false, message: "EMAIL_FROM is not configured in production", provider: "configuration" };
+    }
+    console.log("[email] development console fallback", { to: payload.to, subject: payload.subject });
+    return { success: true, message: "Email logged in development (EMAIL_FROM not configured)", provider: "console" };
+  }
+
+  // ─── Resend provider ─────────────────────────────────────────────────
+  {
     try {
       // Lazy import so the dependency is only loaded when actually needed.
       const { Resend } = await import("resend");
       const resend = new Resend(resendApiKey);
-      const fromAddress = process.env.EMAIL_FROM || "Hackmitten 3.0 <no-reply@hackmitten.example>";
       const { data, error } = await resend.emails.send({
         from: fromAddress,
         to: [payload.to],

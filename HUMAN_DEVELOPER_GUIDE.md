@@ -234,7 +234,7 @@ hostname for blob URLs.
 | `BLOB_STORE_ID`             | optional | Vercel Blob store id (paired with `BLOB_READ_WRITE_TOKEN`).       |
 | `EMAIL_API_URL`             | optional | Email provider endpoint. If unset, emails are logged to console. |
 | `EMAIL_API_KEY`             | optional | Bearer token for the email provider.                            |
-| `EMAIL_FROM`                | optional | `From:` header for outbound emails.                              |
+| `EMAIL_FROM`                | required in production | Verified sender address for Resend outbound emails.       |
 
 > The seed scripts never write to `.env.local` or any file. They read from
 > `process.env` and fail loudly when required variables are missing.

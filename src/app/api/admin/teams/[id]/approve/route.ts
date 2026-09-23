@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requirePermission, jsonError } from "@/lib/api-auth";
 import { writeAudit } from "@/lib/audit";
 import { recordChange, snapshotRow } from "@/lib/change-history";
-import { sendEmail, approvalEmailHtml, approvalEmailText } from "@/lib/email";
+import { sendEmail, approvalEmailHtml, approvalEmailText, type EmailResult } from "@/lib/email";
 import {
   generateQrToken,
   generateRegistrationId,
@@ -116,15 +116,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (isFirstApproval) {
-      // Fire-and-forget email sending — don't block the response.
-      // Failures are logged but never roll back the approval.
+      // Wait for the provider attempt, but do not roll back committed approval
+      // state when delivery is unavailable or rejected.
       const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
       const leader = refreshed?.members.find((member) => member.isLeader);
+      let emailResult: EmailResult = { success: false, message: "Leader email or pass is missing", provider: "configuration" };
       if (!leader?.email || !leader.qrToken) {
-        console.error(`[email] approval email skipped for team ${team.teamName}: leader email or pass is missing`);
+        console.error("[approval-email] delivery skipped", { teamId: id, reason: emailResult.message });
       } else {
         const passUrl = baseUrl ? `${baseUrl}/pass/${leader.qrToken}` : `/pass/${leader.qrToken}`;
-        sendEmail({
+        emailResult = await sendEmail({
           to: leader.email,
           subject: "Hackmitten 3.0 — Team Approved",
           html: approvalEmailHtml({
@@ -143,18 +144,18 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
             passUrl,
             whatsappGroupUrl: "https://chat.whatsapp.com/CKjNXeNALPzAymQ0GhfMCj",
           }),
-        })
-          .then((res) => {
-            if (!res.success) {
-              console.error(`[email] approval email failed for ${leader.email}: ${res.message} (provider: ${res.provider})`);
-            } else {
-              console.log(`[email] approval email sent to ${leader.email} via ${res.provider}`);
-            }
-          })
-          .catch((err) => console.error("[email] unexpected approval email error", err));
+        });
+        if (!emailResult.success) {
+          console.error("[approval-email] delivery failed", {
+            teamId: id,
+            provider: emailResult.provider,
+            message: emailResult.message,
+          });
+        }
       }
+      return NextResponse.json({ team: refreshed, email: emailResult });
     } else {
-      console.log(`[email] skipping approval email for team ${team.teamName} — re-approval (registrationId ${team.registrationId} already existed)`);
+      console.log("[approval-email] duplicate suppressed", { teamId: id, reason: "re-approval" });
     }
 
     return NextResponse.json({ team: refreshed });

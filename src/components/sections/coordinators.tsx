@@ -28,6 +28,8 @@ export function Coordinators() {
   const students = coordinators.filter((c) => c.type === "STUDENT");
   const faculty = coordinators.filter((c) => c.type === "FACULTY");
 
+  if (coordinators.length === 0) return null;
+
   return (
     <section id="crew" className="relative section-pad mx-auto max-w-7xl">
       <div className="mb-12 md:mb-16">

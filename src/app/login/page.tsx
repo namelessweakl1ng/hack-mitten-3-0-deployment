@@ -29,6 +29,7 @@ export default function LoginPage() {
     const res = await signIn("credentials", {
       identifier,
       password,
+      role: selectedRole,
       redirect: false,
     });
     setLoading(false);

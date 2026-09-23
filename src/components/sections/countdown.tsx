@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-type EventConfig = {
-  eventStartDate: string;
-  eventStartTime: string;
-  eventTimezone: string;
-  eventEndDate: string;
-  eventEndTime: string;
-  eventDurationHours: number;
+type EventStateResponse = {
+  state:
+    | "UPCOMING"
+    | "REGISTRATION_OPEN"
+    | "REGISTRATION_CLOSED"
+    | "LIVE"
+    | "ENDED";
+  eventStartIso: string | null;
+  eventEndIso: string | null;
+  durationHours: number;
+  timezone: string;
 };
 
 type Remaining = {
@@ -17,83 +21,101 @@ type Remaining = {
   hours: number;
   minutes: number;
   seconds: number;
-  isLive: boolean;
-  isComplete: boolean;
 };
 
-function computeRemaining(startIso: string, endIso: string): Remaining {
-  const now = Date.now();
-  const start = new Date(startIso).getTime();
-  const end = new Date(endIso).getTime();
-  if (isNaN(start)) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, isLive: false, isComplete: false };
+function getRemaining(targetIso: string | null, now: number): Remaining | null {
+  if (!targetIso) return null;
+
+  const diff = new Date(targetIso).getTime() - now;
+
+  if (!Number.isFinite(diff) || diff <= 0) {
+    return null;
   }
-  if (now < start) {
-    const diff = start - now;
-    return {
-      days: Math.floor(diff / 86400000),
-      hours: Math.floor((diff % 86400000) / 3600000),
-      minutes: Math.floor((diff % 3600000) / 60000),
-      seconds: Math.floor((diff % 60000) / 1000),
-      isLive: false,
-      isComplete: false,
-    };
-  }
-  if (now >= start && (isNaN(end) || now < end)) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0, isLive: true, isComplete: false };
-  }
-  return { days: 0, hours: 0, minutes: 0, seconds: 0, isLive: false, isComplete: true };
+
+  return {
+    days: Math.floor(diff / 86400000),
+    hours: Math.floor((diff % 86400000) / 3600000),
+    minutes: Math.floor((diff % 3600000) / 60000),
+    seconds: Math.floor((diff % 60000) / 1000),
+  };
 }
 
 export function Countdown() {
-  const { data } = useQuery<{ config: EventConfig }>({
-    queryKey: ["config"],
-    queryFn: async () => (await fetch("/api/config")).json(),
-  });
-  const cfg = data?.config;
+  const { data, isLoading, isError } = useQuery<EventStateResponse>({
+    queryKey: ["event-state"],
+    queryFn: async () => {
+      const response = await fetch("/api/event-state", {
+        cache: "no-store",
+      });
 
-  // Compose ISO datetime from date + time fields
-  const startIso = cfg ? `${cfg.eventStartDate}T${cfg.eventStartTime || "00:00"}:00` : "";
-  const endIso = cfg ? `${cfg.eventEndDate}T${cfg.eventEndTime || "00:00"}:00` : "";
+      if (!response.ok) {
+        throw new Error("Failed to load event state");
+      }
 
-  const [remaining, setRemaining] = useState<Remaining>({
-    days: 0, hours: 0, minutes: 0, seconds: 0, isLive: false, isComplete: false,
+      return response.json();
+    },
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
+
+  // One clock tick per second. The displayed countdown is derived from it.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!startIso) return;
-    const tick = () => setRemaining(computeRemaining(startIso, endIso));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [startIso, endIso]);
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
 
-  if (!cfg) {
+    return () => window.clearInterval(timer);
+  }, []);
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center gap-4 md:gap-8 mt-8">
-        {[24, 13, 42, 9].map((_, i) => (
-          <div key={i} className="h-16 w-16 md:h-20 md:w-20 rounded bg-white/5 animate-pulse" />
-        ))}
+      <div className="mt-8 mono text-xs uppercase tracking-[0.25em] text-[#A8A8A8]">
+        Loading mission clock...
       </div>
     );
   }
 
-  if (remaining.isLive) {
+  if (isError || !data) {
     return (
-      <div className="mt-8 flex items-center gap-3">
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D83A43] opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#B52A32]" />
-        </span>
-        <span className="display text-base md:text-xl font-bold text-white tracking-tight">
-          HACKATHON LIVE
-        </span>
-        <span className="mono text-xs text-[#A8A8A8]">· {cfg.eventDurationHours}H RUNNING</span>
+      <div className="mt-8 mono text-xs uppercase tracking-[0.25em] text-[#A8A8A8]">
+        Mission clock unavailable
       </div>
     );
   }
 
-  if (remaining.isComplete) {
+  if (data.state === "LIVE") {
+    const remaining = getRemaining(data.eventEndIso, now);
+
+    return (
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D83A43] opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#B52A32]" />
+          </span>
+
+          <span className="display text-base md:text-xl font-bold text-white">
+            HACKATHON LIVE
+          </span>
+        </div>
+
+        {remaining && (
+          <span className="mono text-xs text-[#A8A8A8]">
+            {String(
+              remaining.hours + remaining.days * 24,
+            ).padStart(2, "0")}
+            :
+            {String(remaining.minutes).padStart(2, "0")}:
+            {String(remaining.seconds).padStart(2, "0")} REMAINING
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  if (data.state === "ENDED") {
     return (
       <div className="mt-8 display text-base md:text-xl font-bold text-[#A8A8A8]">
         THE MISSION IS COMPLETE.
@@ -101,27 +123,41 @@ export function Countdown() {
     );
   }
 
-  const units: { label: string; value: number }[] = [
-    { label: "DAYS", value: remaining.days },
-    { label: "HOURS", value: remaining.hours },
-    { label: "MINUTES", value: remaining.minutes },
-    { label: "SECONDS", value: remaining.seconds },
+  if (!data.eventStartIso) {
+    return (
+      <div className="mt-8 mono text-xs uppercase tracking-[0.25em] text-[#A8A8A8]">
+        EVENT DATE TBA
+      </div>
+    );
+  }
+
+  const remaining = getRemaining(data.eventStartIso, now);
+
+  const units = [
+    { label: "DAYS", value: remaining?.days ?? 0 },
+    { label: "HOURS", value: remaining?.hours ?? 0 },
+    { label: "MINUTES", value: remaining?.minutes ?? 0 },
+    { label: "SECONDS", value: remaining?.seconds ?? 0 },
   ];
 
   return (
     <div className="mt-8 flex items-center justify-center gap-2 md:gap-4">
-      {units.map((u, i) => (
-        <div key={u.label} className="flex items-center gap-2 md:gap-4">
+      {units.map((unit, index) => (
+        <div key={unit.label} className="flex items-center gap-2 md:gap-4">
           <div className="flex flex-col items-center">
-            <div className="display text-3xl md:text-5xl font-bold text-white tabular-nums min-w-[2.5ch] md:min-w-[3ch] text-center">
-              {String(u.value).padStart(2, "0")}
+            <div className="display min-w-[2.5ch] text-center text-3xl font-bold tabular-nums text-white md:min-w-[3ch] md:text-5xl">
+              {String(unit.value).padStart(2, "0")}
             </div>
-            <div className="mono text-[9px] md:text-[10px] uppercase tracking-widest text-[#A8A8A8] mt-1">
-              {u.label}
+
+            <div className="mono mt-1 text-[9px] uppercase tracking-widest text-[#A8A8A8] md:text-[10px]">
+              {unit.label}
             </div>
           </div>
-          {i < units.length - 1 && (
-            <span className="display text-2xl md:text-4xl text-[#B52A32] -mt-4">:</span>
+
+          {index < units.length - 1 && (
+            <span className="display -mt-4 text-2xl text-[#B52A32] md:text-4xl">
+              :
+            </span>
           )}
         </div>
       ))}

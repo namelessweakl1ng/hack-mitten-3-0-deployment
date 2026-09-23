@@ -20,10 +20,12 @@ export const authOptions: AuthOptionsWithTrustHost = {
       credentials: {
         identifier: { label: "Username or Email", type: "text" },
         password: { label: "Password", type: "password" },
+        role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.identifier || !credentials?.password) return null;
-        const id = credentials.identifier.trim();
+        if (!credentials?.identifier || !credentials?.password || !credentials?.role) return null;
+        const id = String(credentials.identifier).trim();
+        const selectedRole = String(credentials.role);
         // Try matching by email (lowercased) OR exact username (case-sensitive)
         const user = await db.user.findFirst({
           where: {
@@ -36,6 +38,17 @@ export const authOptions: AuthOptionsWithTrustHost = {
         if (!user) return null;
         const ok = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!ok) return null;
+
+        const roleMatches =
+          (selectedRole === "ADMIN" && user.role === "SUPER_ADMIN") ||
+          (selectedRole === "COORDINATOR" && user.role === "COORDINATOR") ||
+          (selectedRole === "FOOD" && user.role === "FOOD_ADMIN");
+
+        if (!roleMatches) {
+          console.warn("[auth] login rejected: selected role does not match account role");
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,

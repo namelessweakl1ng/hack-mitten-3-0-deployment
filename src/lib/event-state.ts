@@ -69,7 +69,11 @@ export function computeEventState(cfg: {
   const timezone = cfg.eventTimezone || "Asia/Kolkata";
   const durationHours = cfg.eventDurationHours || 24;
 
-  const eventStartIso = composeIso(cfg.eventStartDate, cfg.eventStartTime);
+  const eventStartIso = composeIso(
+    cfg.eventStartDate,
+    cfg.eventStartTime,
+    timezone,
+  );
   // Auto-calculate eventEndIso from Start + Duration (single source of truth — no separate End Date/Time)
   const eventEndIso = eventStartIso
     ? new Date(new Date(eventStartIso).getTime() + durationHours * 3600000).toISOString()
@@ -126,15 +130,77 @@ export function computeEventState(cfg: {
   };
 }
 
-/** Compose an ISO datetime string from a date (YYYY-MM-DD) + time (HH:mm). Returns null if date is missing. */
-function composeIso(date?: string | null, time?: string | null): string | null {
+/**
+ * Convert a local wall-clock date/time in an IANA timezone into a UTC ISO string.
+ *
+ * Example:
+ *   2026-10-28 11:00 Asia/Kolkata
+ *   -> 2026-10-28T05:30:00.000Z
+ *
+ * Uses Intl instead of adding a timezone dependency.
+ */
+function composeIso(
+  date?: string | null,
+  time?: string | null,
+  timezone: string = "Asia/Kolkata",
+): string | null {
   if (!date) return null;
+
   const t = time && time.length >= 5 ? time : "00:00";
-  // Construct as if in the configured timezone (Asia/Kolkata = UTC+5:30).
-  // We store the local wall-clock interpretation as the ISO instant.
-  // For simplicity in this dev environment, we treat the configured date/time as UTC.
-  // Production should use a proper tz library (date-fns-tz / luxon) to interpret Asia/Kolkata correctly.
-  return `${date}T${t}:00.000Z`;
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = t.split(":").map(Number);
+
+  if (
+    !year ||
+    !month ||
+    !day ||
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute)
+  ) {
+    return null;
+  }
+
+  const targetUtcMs = Date.UTC(year, month - 1, day, hour, minute);
+
+  const getTimeZoneOffsetMs = (utcMs: number): number => {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(utcMs));
+
+    const values = Object.fromEntries(
+      parts
+        .filter((part) => part.type !== "literal")
+        .map((part) => [part.type, Number(part.value)]),
+    );
+
+    const displayedUtcMs = Date.UTC(
+      values.year,
+      values.month - 1,
+      values.day,
+      values.hour,
+      values.minute,
+      values.second,
+    );
+
+    return displayedUtcMs - utcMs;
+  };
+
+  // First approximation, then correct for the timezone offset.
+  const firstOffset = getTimeZoneOffsetMs(targetUtcMs);
+  let utcMs = targetUtcMs - firstOffset;
+
+  // A second pass handles timezone transitions/DST boundaries.
+  const secondOffset = getTimeZoneOffsetMs(utcMs);
+  utcMs = targetUtcMs - secondOffset;
+
+  return new Date(utcMs).toISOString();
 }
 
 /**

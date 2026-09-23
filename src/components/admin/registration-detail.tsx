@@ -438,31 +438,77 @@ function PaymentScreenshot({ paymentId, fileName }: { paymentId: string; fileNam
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
     (async () => {
       try {
-        const res = await fetch(`/api/admin/payments/${paymentId}/screenshot`);
-        const j = await res.json();
-        if (j.url) {
-          setUrl(j.url);
-        } else if (res.ok) {
-          // Binary response — create object URL
-          const blob = await res.blob();
-          setUrl(URL.createObjectURL(blob));
+        const res = await fetch(`/api/admin/payments/${paymentId}/screenshot`, {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          throw new Error(`Screenshot request failed: ${res.status}`);
         }
-      } catch { /* ignore */ }
-      finally { setLoading(false); }
+
+        const blob = await res.blob();
+
+        if (blob.size === 0) {
+          throw new Error("Screenshot response was empty");
+        }
+
+        objectUrl = URL.createObjectURL(blob);
+
+        if (!cancelled) {
+          setUrl(objectUrl);
+        }
+      } catch {
+        if (!cancelled) {
+          setUrl(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     })();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
   }, [paymentId]);
 
   if (loading) {
-    return <div className="aspect-square bg-[#080808] rounded border border-white/10 flex items-center justify-center text-xs text-[#A8A8A8]">Loading…</div>;
+    return (
+      <div className="aspect-square bg-[#080808] rounded border border-white/10 flex items-center justify-center text-xs text-[#A8A8A8]">
+        Loading…
+      </div>
+    );
   }
+
   if (!url) {
-    return <div className="aspect-square bg-[#080808] rounded border border-white/10 flex items-center justify-center text-xs text-[#A8A8A8]">No image</div>;
+    return (
+      <div className="aspect-square bg-[#080808] rounded border border-white/10 flex items-center justify-center text-xs text-[#A8A8A8]">
+        No image
+      </div>
+    );
   }
+
   return (
-    <a href={url} target="_blank" className="block aspect-square bg-[#080808] rounded border border-white/10 overflow-hidden hover:border-[#B52A32] transition-colors">
-      <img src={url} alt={fileName} className="w-full h-full object-cover" />
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block aspect-square bg-[#080808] rounded border border-white/10 overflow-hidden hover:border-[#B52A32] transition-colors"
+    >
+      <img
+        src={url}
+        alt={fileName}
+        className="w-full h-full object-cover"
+      />
     </a>
   );
 }

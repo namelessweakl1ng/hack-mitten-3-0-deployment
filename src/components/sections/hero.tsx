@@ -23,7 +23,7 @@ export function Hero() {
   });
   const cfg = data?.config;
   const eventState = useEventState();
-  const regOpen = eventState.data?.registrationOpen ?? true; // default open while loading
+  const regOpen = eventState.data?.registrationOpen ?? false; // fail closed while loading/error
   // Registration is "full" when state is REGISTRATION_OPEN (deadline not passed) but either
   // the manual toggle is off (registrationsOpen=false) OR capacity has been reached.
   const isFull =

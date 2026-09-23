@@ -26,11 +26,16 @@ export default function HomePage() {
   const { scrollProgress } = useScrollProgress();
 
   // Check if winners mode is enabled
-  const { data: winnersData } = useQuery<{ visible: boolean }>({
+  const { data: winnersData } = useQuery<{
+    visible: boolean;
+    winners: Array<{ id: string }>;
+  }>({
     queryKey: ["winners"],
     queryFn: async () => (await fetch("/api/winners")).json(),
   });
-  const winnersMode = winnersData?.visible === true;
+  const winnersMode =
+    winnersData?.visible === true &&
+    (winnersData.winners?.length ?? 0) > 0;
 
   // Check hero visibility — when false, the Hero section is NOT rendered at all
   const { data: configData } = useQuery<{ config: { heroVisible: boolean } }>({

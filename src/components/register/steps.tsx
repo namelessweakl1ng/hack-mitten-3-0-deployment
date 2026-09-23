@@ -2,8 +2,10 @@
 
 import { useRegisterStore } from "./store";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { ArrowRight, ArrowLeft, Plus, X, Check, Crown, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { normalizeTeamName } from "@/lib/team-name";
 
 const STEPS = ["TEAM", "MEMBERS", "DETAILS", "PAYMENT", "SUBMIT"];
 
@@ -52,22 +54,39 @@ export function RegisterStepper() {
 
 export function StepTeam() {
   const { teamName, setTeamName, next } = useRegisterStore();
-  const validFormat = teamName.trim().length >= 2 && /^[a-zA-Z0-9 _\-.]+$/.test(teamName);
+  const normalizedTeamName = normalizeTeamName(teamName);
+  const validFormat = normalizedTeamName.length >= 2 && /^[a-zA-Z0-9 _\-.]+$/.test(teamName.trim());
+  const [debouncedTeamName, setDebouncedTeamName] = useState(normalizedTeamName);
 
-  // Live team-name availability check (debounced via react-query staleTime)
-  const { data: checkData, isLoading: checking } = useQuery({
-    queryKey: ["team-name-check", teamName.trim()],
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedTeamName(normalizedTeamName), 400);
+    return () => window.clearTimeout(timeout);
+  }, [normalizedTeamName]);
+
+  const { data: checkData, isFetching, isError } = useQuery<{ available: boolean; reason?: string }>({
+    queryKey: ["team-name-check", debouncedTeamName],
     queryFn: async () => {
-      if (!validFormat) return { available: false, reason: "invalid" };
-      const r = await fetch(`/api/registrations/check-team-name?name=${encodeURIComponent(teamName.trim())}`);
+      const r = await fetch(`/api/registrations/check-team-name?name=${encodeURIComponent(debouncedTeamName)}`);
+      if (!r.ok) throw new Error("Unable to verify team name availability");
       return r.json();
     },
-    enabled: validFormat,
+    enabled: validFormat && debouncedTeamName === normalizedTeamName,
     staleTime: 30_000,
   });
 
-  const nameTaken = checkData?.available === false && checkData?.reason !== "too-short" && validFormat;
-  const valid = validFormat && !nameTaken;
+  const checking = validFormat && (debouncedTeamName !== normalizedTeamName || isFetching);
+  const availability = !validFormat
+    ? "invalid"
+    : checking
+      ? "checking"
+      : isError
+        ? "error"
+        : checkData?.available === false
+          ? "taken"
+          : checkData?.available === true
+            ? "available"
+            : "error";
+  const valid = availability === "available";
 
   return (
     <div className="max-w-xl mx-auto">
@@ -89,17 +108,21 @@ export function StepTeam() {
           className="mt-2 w-full bg-transparent border-b border-white/15 py-3 text-xl md:text-2xl text-white placeholder:text-[#A8A8A8]/40 focus:border-[#B52A32] focus:outline-none transition-colors"
         />
       </label>
-      {teamName.trim().length >= 2 && (
+      {teamName.length > 0 && (
         <div className="mt-2 text-xs">
           {checking ? (
             <span className="text-[#A8A8A8]">Checking availability…</span>
-          ) : nameTaken ? (
+          ) : availability === "taken" ? (
             <span className="text-[#D83A43] flex items-center gap-1.5">
               <AlertCircle size={12} /> Team name already exists. Please choose a different team name.
             </span>
-          ) : validFormat ? (
+          ) : availability === "available" ? (
             <span className="text-green-400 flex items-center gap-1.5">
               <Check size={12} /> Team name is available.
+            </span>
+          ) : availability === "error" ? (
+            <span className="text-[#D83A43] flex items-center gap-1.5">
+              <AlertCircle size={12} /> Unable to verify team name. Please try again.
             </span>
           ) : (
             <span className="text-[#D83A43]">Team name contains invalid characters.</span>

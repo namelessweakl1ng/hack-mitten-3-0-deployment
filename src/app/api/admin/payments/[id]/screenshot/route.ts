@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requirePermission, jsonError } from "@/lib/api-auth";
-import { getPrivateBlobStream, readLocalPrivateFile } from "@/lib/upload";
+import { getPrivateSupabaseStream, readLocalPrivateFile } from "@/lib/upload";
 
 /**
  * GET /api/admin/payments/:id/screenshot
@@ -16,7 +16,7 @@ import { getPrivateBlobStream, readLocalPrivateFile } from "@/lib/upload";
  *   - Unauthenticated → 401
  *   - Wrong role → 403
  *   - No screenshot → 404
- *   - Never returns the raw private Blob URL or local file path
+ *   - Never returns a raw private storage URL or local file path
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -35,9 +35,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const screenshot = payment.screenshots[0];
     const filePath = screenshot.filePath;
 
-    // Path A: Vercel Blob private object — stream through server with the deployed Blob store auth
-    if (filePath.startsWith("http") && process.env.BLOB_STORE_ID) {
-      const result = await getPrivateBlobStream(filePath);
+    // Path A: Supabase private object — stream through the server-side client.
+    if (filePath.startsWith("supabase://payment-screenshots/")) {
+      const result = await getPrivateSupabaseStream(filePath);
       if (!result) {
         return NextResponse.json({ error: "Screenshot not found in storage" }, { status: 404 });
       }

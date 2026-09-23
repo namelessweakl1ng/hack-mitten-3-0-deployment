@@ -14,6 +14,7 @@ import { Winners } from "@/components/sections/winners";
 import { CTA } from "@/components/sections/cta";
 import { Footer } from "@/components/sections/footer";
 import { useQuery } from "@tanstack/react-query";
+import { Reveal } from "@/components/ui/reveal";
 
 // Black hole 3D scene — loaded client-side only, with SSR disabled
 const SpaceScene = dynamic(
@@ -61,23 +62,48 @@ export default function HomePage() {
         {heroVisible && <Hero />}
 
         {winnersMode ? (
-          <>
+          <Reveal>
             <Winners />
-          </>
+          </Reveal>
         ) : (
           <>
-            <About />
-            <Timeline />
-            <Gallery />
-            <Coordinators />
-            <Sponsors />
-            <Venue />
-            <Winners />
-            <CTA />
+            <Reveal>
+              <About />
+            </Reveal>
+
+            <Reveal delay={60}>
+              <Timeline />
+            </Reveal>
+
+            <Reveal delay={80}>
+              <Gallery />
+            </Reveal>
+
+            <Reveal delay={100}>
+              <Coordinators />
+            </Reveal>
+
+            <Reveal delay={80}>
+              <Sponsors />
+            </Reveal>
+
+            <Reveal delay={60}>
+              <Venue />
+            </Reveal>
+
+            <Reveal delay={80}>
+              <Winners />
+            </Reveal>
+
+            <Reveal delay={100}>
+              <CTA />
+            </Reveal>
           </>
         )}
 
-        <Footer />
+        <Reveal>
+          <Footer />
+        </Reveal>
       </div>
     </main>
   );

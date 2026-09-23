@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { composeIso } from "@/lib/timezone";
 
 type Phase = {
   id: string;
@@ -13,16 +14,46 @@ type Phase = {
   sortOrder: number;
 };
 
-function phaseState(p: Phase): "completed" | "active" | "upcoming" {
+function phaseState(
+  p: Phase,
+  timezone: string,
+): "completed" | "active" | "upcoming" {
   const now = Date.now();
-  const start = new Date(`${p.startDate}T${p.startTime || "00:00"}:00`).getTime();
-  const end = p.endDate ? new Date(`${p.endDate}T${p.endTime || "23:59"}:00`).getTime() : start + 3600000;
+
+  const startIso = composeIso(
+    p.startDate,
+    p.startTime || "00:00",
+    timezone,
+  );
+
+  const endIso = p.endDate
+    ? composeIso(
+        p.endDate,
+        p.endTime || "23:59",
+        timezone,
+      )
+    : startIso
+      ? new Date(new Date(startIso).getTime() + 3600000).toISOString()
+      : null;
+
+  const start = startIso ? new Date(startIso).getTime() : NaN;
+  const end = endIso ? new Date(endIso).getTime() : NaN;
+
+  if (!Number.isFinite(start)) return "upcoming";
   if (now < start) return "upcoming";
-  if (now > end) return "completed";
+  if (!Number.isFinite(end) || now > end) return "completed";
   return "active";
 }
 
 export function Timeline() {
+  const { data: configData } = useQuery<{
+    config: { eventTimezone?: string | null };
+  }>({
+    queryKey: ["config"],
+    queryFn: async () => (await fetch("/api/config")).json(),
+  });
+
+  const timezone = configData?.config?.eventTimezone || "Asia/Kolkata";
   const { data } = useQuery<{ phases: Phase[] }>({
     queryKey: ["phases"],
     queryFn: async () => (await fetch("/api/phases")).json(),
@@ -30,8 +61,8 @@ export function Timeline() {
   const phases: Phase[] = data?.phases ?? [];
   if (phases.length === 0) return null;
 
-  const activePhase = phases.find((p) => phaseState(p) === "active");
-  const nextPhase = phases.find((p) => phaseState(p) === "upcoming");
+  const activePhase = phases.find((p) => phaseState(p, timezone) === "active");
+  const nextPhase = phases.find((p) => phaseState(p, timezone) === "upcoming");
 
   return (
     <section id="timeline" className="relative section-pad mx-auto max-w-7xl">
@@ -86,7 +117,7 @@ export function Timeline() {
       {/* Phase grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
         {phases.map((p, i) => {
-          const state = phaseState(p);
+          const state = phaseState(p, timezone);
           const num = String(i + 1).padStart(2, "0");
           return (
             <div

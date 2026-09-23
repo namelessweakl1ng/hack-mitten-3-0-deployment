@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from "bun:test";
 import { computeEventState } from "../src/lib/event-state";
+import { composeIso } from "../src/lib/timezone";
 
 describe("computeEventState", () => {
   const baseConfig = {
@@ -99,5 +100,18 @@ describe("computeEventState", () => {
     });
 
     expect(state.timezone).toBe("America/New_York");
+  });
+
+
+  it("converts phase wall-clock times using the configured timezone", () => {
+    expect(
+      composeIso("2026-10-28", "11:00", "Asia/Kolkata"),
+    ).toBe("2026-10-28T05:30:00.000Z");
+  });
+
+  it("handles a timezone transition when converting wall-clock time", () => {
+    expect(
+      composeIso("2026-07-15", "11:00", "America/New_York"),
+    ).toBe("2026-07-15T15:00:00.000Z");
   });
 });

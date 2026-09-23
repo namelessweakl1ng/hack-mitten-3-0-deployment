@@ -84,9 +84,14 @@ export const useRegisterStore = create<RegisterState>((set) => ({
     })),
   setTransactionId: (s) => set({ transactionId: s }),
   setScreenshot: (f) =>
-    set({
-      screenshot: f,
-      screenshotPreview: f ? URL.createObjectURL(f) : null,
+    set((st) => {
+      if (st.screenshotPreview && st.screenshotPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(st.screenshotPreview);
+      }
+      return {
+        screenshot: f,
+        screenshotPreview: f ? URL.createObjectURL(f) : null,
+      };
     }),
   setTeamId: (id) => set({ teamId: id }),
   setPaymentId: (id) => set({ paymentId: id }),
@@ -94,18 +99,23 @@ export const useRegisterStore = create<RegisterState>((set) => ({
   setServerError: (e) => set({ serverError: e }),
   setSubmitting: (s) => set({ submitting: s }),
   reset: () =>
-    set({
-      step: 0,
-      teamName: "",
-      college: "",
-      members: [emptyMember(), emptyMember(), emptyMember()],
-      transactionId: "",
-      screenshot: null,
-      screenshotPreview: null,
-      teamId: null,
-      paymentId: null,
-      screenshotPath: null,
-      serverError: null,
-      submitting: false,
+    set((st) => {
+      if (st.screenshotPreview && st.screenshotPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(st.screenshotPreview);
+      }
+      return {
+        step: 0,
+        teamName: "",
+        college: "",
+        members: [emptyMember(), emptyMember(), emptyMember()],
+        transactionId: "",
+        screenshot: null,
+        screenshotPreview: null,
+        teamId: null,
+        paymentId: null,
+        screenshotPath: null,
+        serverError: null,
+        submitting: false,
+      };
     }),
 }));

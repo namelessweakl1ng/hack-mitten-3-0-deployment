@@ -6,6 +6,10 @@ const PRIVATE_UPLOAD_ROOT = path.join(process.cwd(), ".private-uploads");
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_SIZE = 8 * 1024 * 1024;
 
+function isVercelRuntime(): boolean {
+  return Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.VERCEL_URL);
+}
+
 export class UploadError extends Error {
   statusCode = 400;
   constructor(message: string) {
@@ -24,7 +28,9 @@ export interface StoredFile {
 }
 
 function blobConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN && process.env.BLOB_STORE_ID);
+  const hasStoreId = Boolean(process.env.BLOB_STORE_ID);
+  const hasToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(hasStoreId && (hasToken || isVercelRuntime()));
 }
 
 function safeName(prefix: string, mime: string): string {
@@ -85,21 +91,37 @@ async function storeFileInternal(file: File, prefix: string, isPrivate: boolean)
   const effectiveMime = detected ?? file.type;
   const fileName = safeName(prefix, effectiveMime);
 
+  if (isPrivate && isVercelRuntime() && !blobConfigured()) {
+    throw new UploadError("Payment screenshot storage is not configured. Connect a Vercel Blob store to this deployment.");
+  }
+
   if (blobConfigured()) {
     return uploadToBlob(file, fileName, isPrivate);
   }
-  return saveToLocal(file, fileName, isPrivate);
+
+  if (isPrivate) {
+    return saveToLocal(file, fileName, true);
+  }
+
+  return saveToLocal(file, fileName, false);
 }
 
 async function uploadToBlob(file: File, fileName: string, isPrivate: boolean): Promise<StoredFile> {
   const { put } = await import("@vercel/blob");
-  const result = await put(fileName, file, {
+  const options: Record<string, unknown> = {
     access: isPrivate ? "private" : "public",
     addRandomSuffix: true,
     allowOverwrite: false,
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-    storeId: process.env.BLOB_STORE_ID,
-  });
+  };
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    options.token = process.env.BLOB_READ_WRITE_TOKEN;
+  }
+  if (process.env.BLOB_STORE_ID) {
+    options.storeId = process.env.BLOB_STORE_ID;
+  }
+
+  const result = await put(fileName, file, options as any);
   return {
     relativePath: result.url,
     absolutePath: result.url,
@@ -151,11 +173,14 @@ export async function getPrivateBlobStream(blobUrl: string): Promise<{
   if (!blobConfigured()) return null;
   try {
     const { get } = await import("@vercel/blob");
-    const result = await get(blobUrl, {
-      access: "private",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      storeId: process.env.BLOB_STORE_ID,
-    });
+    const options: Record<string, unknown> = { access: "private" };
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      options.token = process.env.BLOB_READ_WRITE_TOKEN;
+    }
+    if (process.env.BLOB_STORE_ID) {
+      options.storeId = process.env.BLOB_STORE_ID;
+    }
+    const result = await get(blobUrl, options as any);
     if (!result || result.statusCode !== 200 || !result.stream) return null;
     return {
       stream: result.stream as ReadableStream<Uint8Array>,

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { GALLERY } from "@/data/gallery";
+import { resolveGalleryItems } from "@/data/gallery";
 
 type GalleryItem = {
   id: string;
@@ -23,20 +23,7 @@ export function Gallery() {
     },
   });
 
-  const databaseItems = data?.items ?? [];
-
-  const items: GalleryItem[] =
-    error
-      ? []
-      : databaseItems.length > 0
-      ? databaseItems
-      : GALLERY.map((item, index) => ({
-          id: `static-gallery-${index}`,
-          title: item.title,
-          caption: item.caption || null,
-          imageUrl: item.image,
-          year: String(item.year),
-        }));
+  const items: GalleryItem[] = resolveGalleryItems(error ? null : data?.items ?? undefined);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);

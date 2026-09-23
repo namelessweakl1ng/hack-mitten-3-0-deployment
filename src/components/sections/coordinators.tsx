@@ -50,7 +50,14 @@ export function Coordinators() {
           isLead: c.isLead ?? false,
         }));
 
-  const students = coordinators.filter((c) => c.type === "STUDENT");
+  const students = coordinators
+    .filter((c) => c.type === "STUDENT")
+    .sort((a, b) => {
+      const aOrder = normalizeRole(a.role);
+      const bOrder = normalizeRole(b.role);
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return 0;
+    });
   const faculty = coordinators.filter((c) => c.type === "FACULTY");
 
   if (coordinators.length === 0) return null;
@@ -75,6 +82,15 @@ export function Coordinators() {
   );
 }
 
+function normalizeRole(role: string): number {
+  const normalized = role.trim().toLowerCase();
+  if (normalized === "president") return 1;
+  if (normalized === "vice president") return 2;
+  if (normalized === "secretary") return 3;
+  if (normalized === "joint secretary") return 4;
+  return 99;
+}
+
 function CoordinatorGroup({
   title,
   coordinators,
@@ -89,8 +105,7 @@ function CoordinatorGroup({
         <span className="mono text-[10px] uppercase tracking-[0.3em] text-[#A8A8A8]">{title}</span>
         <div className="h-px flex-1 bg-white/10" />
       </div>
-      {/* Mobile: 4 per row, sm: 3 per row, md: 4 per row, lg: 4 per row (existing) */}
-      <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
         {coordinators.map((c) => (
           <CoordinatorCard key={c.id} c={c} />
         ))}
@@ -107,7 +122,7 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
       }`}
     >
       <div
-        className={`relative overflow-hidden ${c.isLead ? "aspect-[16/10]" : "aspect-[4/5]"}`}
+        className={`relative overflow-hidden ${c.isLead ? "aspect-[16/10]" : "aspect-[4/5] sm:aspect-[4/5]"}`}
       >
         {c.photoUrl ? (
           <img
@@ -132,17 +147,17 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
       </div>
 
       <div className="p-2 sm:p-3 md:p-4 lg:p-5">
-        <h3 className="display text-xs sm:text-sm md:text-base lg:text-lg font-semibold text-white tracking-tight leading-tight">
+        <h3 className="display text-xs sm:text-sm md:text-base lg:text-lg font-semibold text-white tracking-tight leading-tight break-words">
           {c.name}
         </h3>
-        <div className="text-[10px] sm:text-xs text-[#B52A32] mt-0.5 truncate">{c.role}</div>
+        <div className="mt-1 text-[10px] sm:text-xs text-[#B52A32] leading-tight break-words whitespace-normal">{c.role}</div>
         {c.type === "FACULTY" && c.qualification && (
-          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] truncate">
+          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] leading-tight break-words whitespace-normal">
             {c.qualification}
           </div>
         )}
         {c.department && (
-          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] truncate">{c.department}</div>
+          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] leading-tight break-words whitespace-normal">{c.department}</div>
         )}
 
         {/* Email & phone: hide on very small screens to keep cards compact at 4-per-row */}

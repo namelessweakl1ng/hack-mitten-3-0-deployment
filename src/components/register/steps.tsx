@@ -356,7 +356,7 @@ export function StepDetails() {
 export function StepPayment() {
   const {
     transactionId, setTransactionId,
-    screenshot, setScreenshot,
+    screenshot, screenshotPreview, setScreenshot,
     next, prev, serverError, submitting,
     setTeamId, setPaymentId, setScreenshotPath,
     teamName, college, members,
@@ -486,9 +486,12 @@ export function StepPayment() {
               Selected: {screenshot.name} ({Math.round(screenshot.size / 1024)} KB)
             </div>
           )}
-          {screenshot && (
-             
-            <img src={URL.createObjectURL(screenshot)} alt="Preview" className="mt-3 max-h-40 rounded border border-white/10" />
+          {screenshot && screenshotPreview && (
+            <img
+              src={screenshotPreview}
+              alt="Payment screenshot preview"
+              className="mt-3 max-h-40 rounded border border-white/10"
+            />
           )}
         </div>
       </label>

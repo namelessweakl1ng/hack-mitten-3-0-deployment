@@ -35,8 +35,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const screenshot = payment.screenshots[0];
     const filePath = screenshot.filePath;
 
-    // Path A: Vercel Blob private object — stream through server with auth token
-    if (filePath.startsWith("http") && process.env.BLOB_READ_WRITE_TOKEN) {
+    // Path A: Vercel Blob private object — stream through server with the deployed Blob store auth
+    if (filePath.startsWith("http") && process.env.BLOB_STORE_ID) {
       const result = await getPrivateBlobStream(filePath);
       if (!result) {
         return NextResponse.json({ error: "Screenshot not found in storage" }, { status: 404 });

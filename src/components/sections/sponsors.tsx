@@ -1,14 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { SPONSORS } from "@/data/sponsors";
+import { resolveSponsors } from "@/data/sponsors";
 
 type Sponsor = {
   id: string;
   name: string;
   logoUrl: string;
   websiteUrl: string | null;
-  tier: "TITLE" | "PLATINUM" | "GOLD" | "SILVER" | "PARTNER" | "CUSTOM";
+  tier: "TITLE" | "PLATINUM" | "GOLD" | "SILVER" | "PARTNER" | "SUPPORTER" | "CUSTOM";
   customTier: string | null;
   sortOrder: number;
 };
@@ -19,16 +19,18 @@ const TIER_LABEL: Record<string, string> = {
   GOLD: "Gold",
   SILVER: "Silver",
   PARTNER: "Partner",
+  SUPPORTER: "Supporters",
   CUSTOM: "Partner",
 };
 
 const TIER_SIZE: Record<string, string> = {
-  TITLE: "h-16 md:h-24",
-  PLATINUM: "h-14 md:h-20",
-  GOLD: "h-12 md:h-16",
-  SILVER: "h-10 md:h-14",
-  PARTNER: "h-10 md:h-12",
-  CUSTOM: "h-10 md:h-12",
+  TITLE: "h-20 md:h-28",
+  PLATINUM: "h-20 md:h-24",
+  GOLD: "h-16 md:h-20",
+  SILVER: "h-14 md:h-18",
+  PARTNER: "h-12 md:h-16",
+  SUPPORTER: "h-12 md:h-16",
+  CUSTOM: "h-12 md:h-16",
 };
 
 export function Sponsors() {
@@ -41,27 +43,12 @@ export function Sponsors() {
     },
   });
 
-  const databaseSponsors = data?.sponsors ?? [];
-
-  const sponsors: Sponsor[] =
-    error
-      ? []
-      : databaseSponsors.length > 0
-      ? databaseSponsors
-      : SPONSORS.map((s, index) => ({
-          id: `static-sponsor-${index}`,
-          name: s.name,
-          logoUrl: s.logo,
-          websiteUrl: s.website,
-          tier: s.tier as Sponsor["tier"],
-          customTier: null,
-          sortOrder: index,
-        }));
+  const sponsors: Sponsor[] = resolveSponsors(error ? null : data?.sponsors ?? undefined) as Sponsor[];
 
   if (sponsors.length === 0) return null;
 
   // Group by tier
-  const tierOrder = ["TITLE", "PLATINUM", "GOLD", "SILVER", "PARTNER", "CUSTOM"];
+  const tierOrder = ["TITLE", "PLATINUM", "GOLD", "SILVER", "PARTNER", "SUPPORTER", "CUSTOM"];
   const grouped = tierOrder
     .map((tier) => ({ tier, items: sponsors.filter((s) => s.tier === tier) }))
     .filter((g) => g.items.length > 0);
@@ -96,14 +83,11 @@ export function Sponsors() {
                   : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
               }`}>
                 {group.items.map((s) => (
-                  <a
+                  <div
                     key={s.id}
-                    href={s.websiteUrl || "#"}
-                    target={s.websiteUrl ? "_blank" : undefined}
-                    rel="noreferrer"
-                    className="group bg-[#151515] border border-white/10 rounded-lg p-5 md:p-6 flex flex-col items-center justify-center gap-3 transition-colors hover:border-[#B52A32]/40"
+                    className="group bg-[#151515] border border-white/10 rounded-lg p-4 md:p-6 flex flex-col items-center justify-center gap-3 transition-colors hover:border-[#B52A32]/40"
                   >
-                    <div className={`${TIER_SIZE[group.tier]} w-full flex items-center justify-center overflow-hidden`}>
+                    <div className={`${TIER_SIZE[group.tier]} w-full overflow-hidden rounded border border-white/5 bg-[#0a0a0a] p-2`}>
                       {s.logoUrl ? (
                         <img
                           src={s.logoUrl}
@@ -115,10 +99,10 @@ export function Sponsors() {
                         <span className="display text-lg font-bold text-[#A8A8A8]/40">{s.name}</span>
                       )}
                     </div>
-                    <div className="text-xs text-white/70 group-hover:text-white transition-colors text-center">
+                    <div className="text-xs text-white/70 text-center">
                       {s.name}
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             </div>

@@ -132,12 +132,11 @@ export function Footer() {
             <div className="mono text-[9px] uppercase tracking-widest text-[#A8A8A8]/60">
               {cfg?.collegeName || "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA"}
             </div>
-            {cfg?.collegeLogoUrl ? (
-               
+            {(cfg?.collegeLogoUrl || "/images/sponsors/mit-logo.png") ? (
               <img
-                src={cfg.collegeLogoUrl}
-                alt="College logo"
-                className="h-10 md:h-12 w-auto object-contain opacity-60"
+                src={cfg?.collegeLogoUrl || "/images/sponsors/mit-logo.png"}
+                alt="MIT Thandavapura logo"
+                className="h-10 md:h-12 w-auto object-contain opacity-100"
               />
             ) : (
               <div className="h-10 md:h-12 px-4 flex items-center justify-center rounded border border-white/10 bg-[#080808]">

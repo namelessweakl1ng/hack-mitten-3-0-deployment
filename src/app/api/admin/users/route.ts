@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requirePermission, jsonError } from "@/lib/api-auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { ensureOperationalUser } from "@/lib/operational-users";
 
 const createSchema = z.object({
   username: z.string().min(4).max(60).regex(/^[a-zA-Z0-9_.\-]+$/),
@@ -43,6 +44,17 @@ export async function POST(req: Request) {
     if (clash) {
       return NextResponse.json({ error: "Username or email already taken" }, { status: 409 });
     }
+    if (role === "COORDINATOR" || role === "FOOD_ADMIN") {
+      const user = await ensureOperationalUser({
+        username,
+        email,
+        password,
+        name: name ?? username,
+        role,
+      });
+      return NextResponse.json({ user }, { status: 201 });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await db.user.create({
       data: { username, email, name, role, passwordHash },

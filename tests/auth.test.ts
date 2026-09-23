@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import bcrypt from "bcryptjs";
 
-import { roleMatchesSelectedRole, verifyPasswordAndRole } from "@/lib/auth";
+import {
+  findUserByLoginIdentifier,
+  normalizeLoginIdentifier,
+  roleMatchesSelectedRole,
+  verifyPasswordAndRole,
+} from "@/lib/auth";
 
 describe("role mapping", () => {
   it("maps ADMIN to SUPER_ADMIN", () => {
@@ -85,6 +90,53 @@ describe("password verification", () => {
     expect(ok).toBe(false);
   });
 
+  it("accepts a correct coordinator password", async () => {
+    const passwordHash = await bcrypt.hash("coordinator-password", 4);
+    await expect(verifyPasswordAndRole({
+      identifier: " coordinator ",
+      password: "coordinator-password",
+      selectedRole: "COORDINATOR",
+      user: { id: "u4", username: "coordinator", email: "coordinator@example.com", role: "COORDINATOR", passwordHash },
+    })).resolves.toBe(true);
+  });
+
+  it("rejects an incorrect coordinator password", async () => {
+    const passwordHash = await bcrypt.hash("coordinator-password", 4);
+    await expect(verifyPasswordAndRole({
+      identifier: "coordinator",
+      password: "wrong-password",
+      selectedRole: "COORDINATOR",
+      user: { id: "u4", username: "coordinator", email: "coordinator@example.com", role: "COORDINATOR", passwordHash },
+    })).resolves.toBe(false);
+  });
+
+  it("accepts a correct food-admin password", async () => {
+    const passwordHash = await bcrypt.hash("food-password", 4);
+    await expect(verifyPasswordAndRole({
+      identifier: "food-admin",
+      password: "food-password",
+      selectedRole: "FOOD",
+      user: { id: "u5", username: "food-admin", email: "food@example.com", role: "FOOD_ADMIN", passwordHash },
+    })).resolves.toBe(true);
+  });
+
+  it("rejects an incorrect food-admin password", async () => {
+    const passwordHash = await bcrypt.hash("food-password", 4);
+    await expect(verifyPasswordAndRole({
+      identifier: "food-admin",
+      password: "wrong-password",
+      selectedRole: "FOOD",
+      user: { id: "u5", username: "food-admin", email: "food@example.com", role: "FOOD_ADMIN", passwordHash },
+    })).resolves.toBe(false);
+  });
+
+  it("rejects cross-role login selections", async () => {
+    const passwordHash = await bcrypt.hash("correct-password", 4);
+    const user = { id: "u6", username: "coordinator", email: "coordinator@example.com", role: "COORDINATOR" as const, passwordHash };
+    await expect(verifyPasswordAndRole({ identifier: "coordinator", password: "correct-password", selectedRole: "FOOD", user })).resolves.toBe(false);
+    await expect(verifyPasswordAndRole({ identifier: "coordinator", password: "correct-password", selectedRole: "ADMIN", user })).resolves.toBe(false);
+  });
+
   it("never trusts environment credentials alone without password verification", async () => {
     const passwordHash = await passwordHashPromise;
     const ok = await verifyPasswordAndRole({
@@ -101,5 +153,33 @@ describe("password verification", () => {
     });
 
     expect(ok).toBe(false);
+  });
+});
+
+describe("login identifier normalization", () => {
+  it("trims surrounding whitespace", () => {
+    expect(normalizeLoginIdentifier("  Coordinator  ")).toBe("Coordinator");
+  });
+
+  it("uses case-insensitive username matching and normalized email matching", async () => {
+    let query: unknown;
+    const database = {
+      user: {
+        findFirst: async (args: unknown) => {
+          query = args;
+          return null;
+        },
+      },
+    } as never;
+
+    expect(await findUserByLoginIdentifier("  CoOrDiNaToR  ", database)).toBeNull();
+    expect(query).toEqual({
+      where: {
+        OR: [
+          { email: "coordinator" },
+          { username: { equals: "CoOrDiNaToR", mode: "insensitive" } },
+        ],
+      },
+    });
   });
 });

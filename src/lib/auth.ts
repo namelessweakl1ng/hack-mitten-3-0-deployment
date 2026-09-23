@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { LOGIN_ROLE_MAP } from "@/lib/operational-users";
 
 // `trustHost` is a runtime option in NextAuth v4.24+ that lets NextAuth trust
 // the X-Forwarded-Host header (required when running behind Vercel's edge /
@@ -17,26 +18,31 @@ type UserLike = {
   passwordHash: string;
 };
 
+export function normalizeLoginIdentifier(identifier: string): string {
+  return identifier.trim();
+}
+
+export async function findUserByLoginIdentifier(identifier: string, database = db) {
+  const normalizedIdentifier = normalizeLoginIdentifier(identifier);
+  if (!normalizedIdentifier) return null;
+
+  return database.user.findFirst({
+    where: {
+      OR: [
+        { email: normalizedIdentifier.toLowerCase() },
+        { username: { equals: normalizedIdentifier, mode: "insensitive" } },
+      ],
+    },
+  });
+}
+
 export function roleMatchesSelectedRole(
   selectedRole: string | null | undefined,
   userRole: import("@prisma/client").Role | string,
 ): boolean {
   const normalizedSelection = String(selectedRole ?? "").trim().toUpperCase();
   const normalizedUserRole = String(userRole ?? "").trim().toUpperCase();
-
-  if (normalizedSelection === "ADMIN" || normalizedSelection === "SUPER_ADMIN") {
-    return normalizedUserRole === "SUPER_ADMIN";
-  }
-
-  if (normalizedSelection === "COORDINATOR") {
-    return normalizedUserRole === "COORDINATOR";
-  }
-
-  if (normalizedSelection === "FOOD" || normalizedSelection === "FOOD_ADMIN") {
-    return normalizedUserRole === "FOOD_ADMIN";
-  }
-
-  return false;
+  return LOGIN_ROLE_MAP[normalizedSelection as keyof typeof LOGIN_ROLE_MAP] === normalizedUserRole;
 }
 
 export async function verifyPasswordAndRole({
@@ -74,17 +80,10 @@ export const authOptions: AuthOptionsWithTrustHost = {
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password || !credentials?.role) return null;
 
-        const id = String(credentials.identifier).trim();
+        const id = normalizeLoginIdentifier(String(credentials.identifier));
         const selectedRole = String(credentials.role);
 
-        const user = await db.user.findFirst({
-          where: {
-            OR: [
-              { email: id.toLowerCase() },
-              { username: { equals: id, mode: "insensitive" } },
-            ],
-          },
-        });
+        const user = await findUserByLoginIdentifier(id);
 
         if (!user) return null;
 

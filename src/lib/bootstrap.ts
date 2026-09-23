@@ -1,5 +1,5 @@
-import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { ensureOperationalUser } from "@/lib/operational-users";
 
 type BootstrapDatabase = Pick<typeof db, "eventConfig" | "user">;
 
@@ -74,44 +74,12 @@ export async function ensureSuperAdminBootstrap({
   password: string;
   database?: BootstrapDatabase;
 }) {
-  const normalizedUsername = username.trim();
-  const normalizedEmail = email.trim().toLowerCase();
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  const existing = await database.user.findFirst({
-    where: {
-      OR: [{ username: normalizedUsername }, { email: normalizedEmail }],
-    },
-  });
-
-  if (!existing) {
-    return database.user.create({
-      data: {
-        username: normalizedUsername,
-        email: normalizedEmail,
-        name: "Super Admin",
-        role: "SUPER_ADMIN",
-        passwordHash,
-      },
-    });
-  }
-
-  const sameAdmin =
-    existing.role === "SUPER_ADMIN" &&
-    (existing.username === normalizedUsername || existing.email === normalizedEmail);
-
-  if (!sameAdmin) {
-    return existing;
-  }
-
-  return database.user.update({
-    where: { id: existing.id },
-    data: {
-      username: normalizedUsername,
-      email: normalizedEmail,
-      role: "SUPER_ADMIN",
-      passwordHash,
-      name: existing.name ?? "Super Admin",
-    },
+  return ensureOperationalUser({
+    username,
+    email,
+    password,
+    name: "Super Admin",
+    role: "SUPER_ADMIN",
+    database,
   });
 }

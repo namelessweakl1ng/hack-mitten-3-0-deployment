@@ -22,10 +22,11 @@
  *
  * Usage: bun run prisma/seed.ts
  */
-import { PrismaClient, Role, MealType } from "@prisma/client";
+import { PrismaClient, MealType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { generateBerserkSecret } from "../src/lib/constants";
-import { ensureSingletonEventConfig, ensureSuperAdminBootstrap } from "../src/lib/bootstrap";
+import { ensureSingletonEventConfig } from "../src/lib/bootstrap";
+import { ensureOperationalUser, readCredentialGroup } from "../src/lib/operational-users";
 
 const db = new PrismaClient();
 
@@ -56,21 +57,17 @@ async function main() {
   let berserkSecret = optional("HM3_BERSERK_SECRET");
   if (!berserkSecret) {
     berserkSecret = generateBerserkSecret(48);
-    console.warn("─────────────────────────────────────────────────────────────────────");
-    console.warn("⚠️  HM3_BERSERK_SECRET not set in environment.");
-    console.warn("A new 48-char BERSERK recovery secret was generated for this run.");
-    console.warn("Save it NOW in your secret manager / Vercel project env vars.");
-    console.warn("It will NOT be written to any file by this script.\n");
-    console.warn(`HM3_BERSERK_SECRET=${berserkSecret}`);
-    console.warn("─────────────────────────────────────────────────────────────────────\n");
+    console.warn("HM3_BERSERK_SECRET not set; a recovery secret was generated for this run and was not persisted.");
   }
 
   const berserkHash = await bcrypt.hash(berserkSecret, 12);
 
-  const superAdmin = await ensureSuperAdminBootstrap({
+  const superAdmin = await ensureOperationalUser({
     username: adminUsername,
     email: adminEmail,
     password: adminPassword,
+    name: "Super Admin",
+    role: "SUPER_ADMIN",
   });
 
   await db.user.update({
@@ -80,47 +77,21 @@ async function main() {
   console.log(`  ✓ super admin (${adminUsername})`);
 
   // ─── Coordinator (optional) ─────────────────────────────────────────────
-  const coordUsername = optional("COORDINATOR_USERNAME");
-  const coordPassword = optional("COORDINATOR_PASSWORD");
-  if (coordUsername && coordPassword) {
-    const coordEmail = optional("COORDINATOR_EMAIL") ?? `${coordUsername}@hackmitten.local`;
-    const coordHash = await bcrypt.hash(coordPassword, 12);
-    await db.user.upsert({
-      where: { username: coordUsername },
-      update: { email: coordEmail, passwordHash: coordHash, role: Role.COORDINATOR },
-      create: {
-        username: coordUsername,
-        email: coordEmail,
-        name: "Coordinator",
-        role: Role.COORDINATOR,
-        passwordHash: coordHash,
-      },
-    });
-    console.log(`  ✓ coordinator (${coordUsername})`);
+  const coordinator = readCredentialGroup(process.env, "COORDINATOR");
+  if (coordinator) {
+    const user = await ensureOperationalUser({ ...coordinator, name: "Coordinator", role: "COORDINATOR" });
+    console.log(`  ✓ coordinator (${user.username}, ${user.email})`);
   } else {
-    console.log("  · coordinator account skipped (COORDINATOR_USERNAME / COORDINATOR_PASSWORD not both set)");
+    console.log("  · coordinator account not provisioned (credential group absent)");
   }
 
   // ─── Food admin (optional) ──────────────────────────────────────────────
-  const foodUsername = optional("FOOD_ADMIN_USERNAME");
-  const _foodPassword = optional("FOOD_ADMIN_PASSWORD");
-  if (foodUsername && _foodPassword) {
-    const foodEmail = optional("FOOD_ADMIN_EMAIL") ?? `${foodUsername}@hackmitten.local`;
-    const foodHash = await bcrypt.hash(_foodPassword, 12);
-    await db.user.upsert({
-      where: { username: foodUsername },
-      update: { email: foodEmail, passwordHash: foodHash, role: Role.FOOD_ADMIN },
-      create: {
-        username: foodUsername,
-        email: foodEmail,
-        name: "Food Admin",
-        role: Role.FOOD_ADMIN,
-        passwordHash: foodHash,
-      },
-    });
-    console.log(`  ✓ food admin (${foodUsername})`);
+  const foodAdmin = readCredentialGroup(process.env, "FOOD_ADMIN");
+  if (foodAdmin) {
+    const user = await ensureOperationalUser({ ...foodAdmin, name: "Food Admin", role: "FOOD_ADMIN" });
+    console.log(`  ✓ food admin (${user.username}, ${user.email})`);
   } else {
-    console.log("  · food admin account skipped (FOOD_ADMIN_USERNAME / FOOD_ADMIN_PASSWORD not both set)");
+    console.log("  · food admin account not provisioned (credential group absent)");
   }
 
   // ─── Event config singleton ────────────────────────────────────────────

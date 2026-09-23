@@ -1,23 +1,31 @@
 import { db } from "../src/lib/db";
-import { ensureSingletonEventConfig, ensureSuperAdminBootstrap } from "../src/lib/bootstrap";
-
-function required(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
+import { ensureSingletonEventConfig } from "../src/lib/bootstrap";
+import { ensureOperationalUser, readCredentialGroup } from "../src/lib/operational-users";
 
 async function main() {
-  const username = required("ADMIN_USERNAME");
-  const email = required("ADMIN_EMAIL");
-  const password = required("ADMIN_PASSWORD");
+  const admin = readCredentialGroup(process.env, "ADMIN");
+  if (!admin) throw new Error("ADMIN_USERNAME, ADMIN_EMAIL, and ADMIN_PASSWORD are required");
 
   const eventConfig = await ensureSingletonEventConfig();
-  const superAdmin = await ensureSuperAdminBootstrap({ username, email, password });
+  const superAdmin = await ensureOperationalUser({ ...admin, name: "Super Admin", role: "SUPER_ADMIN" });
 
   console.log(`Production bootstrap complete: EventConfig=${eventConfig.id}, SUPER_ADMIN=${superAdmin.username}`);
+
+  const coordinator = readCredentialGroup(process.env, "COORDINATOR");
+  if (coordinator) {
+    const user = await ensureOperationalUser({ ...coordinator, name: "Coordinator", role: "COORDINATOR" });
+    console.log(`  ✓ COORDINATOR provisioned (${user.username}, ${user.email})`);
+  } else {
+    console.log("  · COORDINATOR not provisioned (credential group absent)");
+  }
+
+  const foodAdmin = readCredentialGroup(process.env, "FOOD_ADMIN");
+  if (foodAdmin) {
+    const user = await ensureOperationalUser({ ...foodAdmin, name: "Food Admin", role: "FOOD_ADMIN" });
+    console.log(`  ✓ FOOD_ADMIN provisioned (${user.username}, ${user.email})`);
+  } else {
+    console.log("  · FOOD_ADMIN not provisioned (credential group absent)");
+  }
 }
 
 main()

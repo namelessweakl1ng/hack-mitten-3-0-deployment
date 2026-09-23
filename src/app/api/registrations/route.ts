@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     const team = await db.$transaction(async (tx) => {
       // Serialize submissions for the same canonical name so equivalent names
       // cannot both pass the check before either insert commits.
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${normalizedTeamName}))`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${normalizedTeamName}))`;
       const existingInTransaction = await findTeamWithNormalizedName(tx, normalizedTeamName);
       if (existingInTransaction) {
         throw new Error("TEAM_NAME_TAKEN");

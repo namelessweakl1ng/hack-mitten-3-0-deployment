@@ -6,7 +6,7 @@ export type StaticSponsor = {
 };
 
 export const SPONSORS: StaticSponsor[] = [
-  { name: "Vlabs", logo: "/images/sponsors/Vlabs.jpeg", website: null, tier: "TITLE" },
+  { name: "VigyanLabs", logo: "/images/sponsors/Vlabs.jpeg", website: null, tier: "TITLE" },
   { name: "AI&ML", logo: "/images/sponsors/aiml logo.jpeg", website: null, tier: "SUPPORTER" },
   { name: "CSE", logo: "/images/sponsors/cse logo.jpeg", website: null, tier: "SUPPORTER" },
 ];

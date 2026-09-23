@@ -1,7 +1,7 @@
 /**
  * Email system for Hackmitten 3.0.
  *
- * Sends approval emails to participants when their team is approved.
+ * Sends the team leader's approval email when their team is approved.
  *
  * Provider priority:
  *   1. Resend — if RESEND_API_KEY env var is present, use Resend to send real emails.
@@ -74,6 +74,7 @@ export function approvalEmailHtml(opts: {
   registrationId: string;
   participantId: string;
   passUrl: string;
+  whatsappGroupUrl: string;
 }): string {
   return `
 <!DOCTYPE html>
@@ -90,8 +91,8 @@ export function approvalEmailHtml(opts: {
           <tr>
             <td style="padding:40px 40px 20px;text-align:center;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#B52A32;">HACKMITTEN 3.0</div>
-              <h1 style="font-size:32px;font-weight:700;color:#F2F2F2;margin:16px 0 8px;">YOU'RE IN.</h1>
-              <p style="font-size:14px;color:#A8A8A8;margin:0;">Your team has been approved. Your digital pass is ready.</p>
+              <h1 style="font-size:32px;font-weight:700;color:#F2F2F2;margin:16px 0 8px;">TEAM APPROVED.</h1>
+              <p style="font-size:14px;color:#A8A8A8;margin:0;">Your team has been approved for Hackmitten 3.0.</p>
             </td>
           </tr>
           <tr>
@@ -106,7 +107,9 @@ export function approvalEmailHtml(opts: {
           </tr>
           <tr>
             <td style="padding:20px 40px 40px;text-align:center;">
-              <a href="${opts.passUrl}" style="display:inline-block;background:#B52A32;color:#F2F2F2;text-decoration:none;padding:14px 36px;border-radius:999px;font-size:14px;font-weight:600;letter-spacing:1px;">VIEW YOUR DIGITAL PASS</a>
+              <a href="${opts.whatsappGroupUrl}" style="display:inline-block;background:#B52A32;color:#F2F2F2;text-decoration:none;padding:14px 36px;border-radius:999px;font-size:14px;font-weight:600;letter-spacing:1px;">JOIN HACKMITTEN WHATSAPP GROUP</a>
+              <p style="font-size:12px;color:#A8A8A8;margin:16px 0 0;">Please join the official team group and keep your registration details available for the event.</p>
+              <a href="${opts.passUrl}" style="display:inline-block;color:#F2F2F2;text-decoration:underline;margin-top:16px;font-size:13px;">VIEW YOUR DIGITAL PASS</a>
               <p style="font-size:12px;color:#A8A8A8;margin:16px 0 0;">Present the QR code on your pass at the food check-in counter.</p>
             </td>
           </tr>
@@ -126,15 +129,18 @@ export function approvalEmailText(opts: {
   registrationId: string;
   participantId: string;
   passUrl: string;
+  whatsappGroupUrl: string;
 }): string {
-  return `HACKMITTEN 3.0 — YOU'RE IN.
+  return `HACKMITTEN 3.0 — TEAM APPROVED.
 
-Your team has been approved. Your digital pass is ready.
+Your team has been approved for Hackmitten 3.0.
 
 Team: ${opts.teamName}
 Registration ID: ${opts.registrationId}
 Participant: ${opts.participantName}
 Participant ID: ${opts.participantId}
+
+Join the official Hackmitten 3.0 WhatsApp group: ${opts.whatsappGroupUrl}
 
 View your digital pass: ${opts.passUrl}
 

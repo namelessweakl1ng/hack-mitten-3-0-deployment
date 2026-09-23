@@ -81,7 +81,7 @@ export const authOptions: AuthOptionsWithTrustHost = {
           where: {
             OR: [
               { email: id.toLowerCase() },
-              { username: id },
+              { username: { equals: id, mode: "insensitive" } },
             ],
           },
         });

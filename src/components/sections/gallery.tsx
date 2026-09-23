@@ -29,6 +29,27 @@ export function Gallery() {
   const [viewportWidth, setViewportWidth] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const pausedRef = useRef(false);
+
+  useEffect(() => {
+    if (items.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      if (!pausedRef.current) setActiveIdx((i) => i + 1);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [items.length]);
+
+  useEffect(() => {
+    if (items.length < 2) return;
+    if (activeIdx >= items.length) {
+      const timer = window.setTimeout(() => setActiveIdx((i) => i - items.length), 550);
+      return () => window.clearTimeout(timer);
+    }
+    if (activeIdx < 0) {
+      const timer = window.setTimeout(() => setActiveIdx((i) => i + items.length), 550);
+      return () => window.clearTimeout(timer);
+    }
+  }, [activeIdx, items.length]);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -39,16 +60,21 @@ export function Gallery() {
     return () => window.removeEventListener("resize", measure);
   }, [items.length]);
 
-  const safeActiveIdx = Math.min(activeIdx, Math.max(0, items.length - 1));
+  const safeActiveIdx = items.length > 0
+    ? ((activeIdx % items.length) + items.length) % items.length
+    : 0;
 
   const goNext = useCallback(() => {
-    setActiveIdx((i) => Math.min(i + 1, Math.max(0, items.length - 1)));
+    pausedRef.current = true;
+    setActiveIdx((i) => i + 1);
   }, [items.length]);
   const goPrev = useCallback(() => {
-    setActiveIdx((i) => Math.max(i - 1, 0));
+    pausedRef.current = true;
+    setActiveIdx((i) => i - 1);
   }, []);
 
   const onTouchStart = (e: React.TouchEvent) => {
+    pausedRef.current = true;
     touchStartX.current = e.touches[0].clientX;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -59,6 +85,7 @@ export function Gallery() {
       else goPrev();
     }
     touchStartX.current = null;
+    window.setTimeout(() => { pausedRef.current = false; }, 2400);
   };
 
   // ─── Responsive geometry ─────────────────────────────────────────────
@@ -71,8 +98,11 @@ export function Gallery() {
 
   // Track offset to center the active item
   const trackOffset = viewportWidth > 0
-    ? viewportWidth / 2 - (safeActiveIdx * (slotWidth + gap) + slotWidth / 2)
+    ? viewportWidth / 2 - ((activeIdx + items.length) * (slotWidth + gap) + slotWidth / 2)
     : 0;
+
+  const loopedItems = [...items, ...items, ...items];
+  const visualActiveIdx = activeIdx + items.length;
 
   // Mobile: no fixed viewport height — let the image aspect ratio define the height
   // Desktop: keep the cinematic fixed height
@@ -134,6 +164,8 @@ export function Gallery() {
             }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
+              onMouseEnter={() => { pausedRef.current = true; }}
+              onMouseLeave={() => { pausedRef.current = false; }}
           >
             {/* Track */}
             <div
@@ -143,8 +175,8 @@ export function Gallery() {
                 gap: `${gap}px`,
               }}
             >
-              {items.map((item, i) => {
-                const distance = Math.abs(i - safeActiveIdx);
+              {loopedItems.map((item, i) => {
+                const distance = Math.abs(i - visualActiveIdx);
                 const isActive = distance === 0;
                 const scale = isActive ? 1.0 : distance === 1 ? 0.72 : 0.55;
                 const grayscale = isActive ? 0 : distance === 1 ? 0.5 : 0.85;
@@ -154,7 +186,7 @@ export function Gallery() {
 
                 return (
                   <figure
-                    key={item.id}
+                    key={`${item.id}-${i}`}
                     className="shrink-0 relative transition-all duration-500 ease-out cursor-pointer"
                     style={{
                       width: `${slotWidth}px`,
@@ -162,7 +194,7 @@ export function Gallery() {
                       opacity,
                       zIndex,
                     }}
-                    onClick={() => setActiveIdx(i)}
+                    onClick={() => setActiveIdx(i - items.length)}
                   >
                     <div
                       className={`relative overflow-hidden bg-[#080808] border transition-colors ${
@@ -180,9 +212,10 @@ export function Gallery() {
                         draggable={false}
                         className="absolute inset-0 h-full w-full object-cover transition-all duration-700"
                         style={{
-                          filter: `grayscale(${grayscale}) brightness(${brightness})`,
+                          filter: `grayscale(${Math.min(1, grayscale + 0.15)}) contrast(1.12) brightness(${brightness * 0.92})`,
                         }}
                       />
+                      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#8B1E24]/15 via-transparent to-black/35 mix-blend-multiply" />
                       {isActive && (
                         <div className="absolute inset-0 pointer-events-none ring-1 ring-[#B52A32]/50" />
                       )}

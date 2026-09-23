@@ -23,9 +23,7 @@ import {
  *  - mark team APPROVED
  *  - mark each participant passVerified = true
  *  - write audit log + change history (enables rollback)
- *  - send approval emails (only on the PENDING → APPROVED transition; re-approvals
- *    after a revert do not re-send emails because the participant emails are
- *    already known to have been notified)
+ *  - send the approval email to the team leader (only on the first approval)
  */
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -109,7 +107,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       detail: `Registration ID ${regId} · ${team.members.length} participants${isFirstApproval ? "" : " (re-approval — no email sent)"}`,
     });
 
-    // Send approval emails — ONLY on the first PENDING → APPROVED transition.
+    // Send one approval email to the leader — ONLY on the first approval.
     // Re-approvals after a revert (registrationId already existed) skip the email
     // to avoid duplicate notifications.
     const refreshed = await db.team.findUnique({
@@ -121,36 +119,39 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       // Fire-and-forget email sending — don't block the response.
       // Failures are logged but never roll back the approval.
       const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-      for (const member of refreshed?.members ?? []) {
-        if (member.email && member.qrToken) {
-          const passUrl = baseUrl ? `${baseUrl}/pass/${member.qrToken}` : `/pass/${member.qrToken}`;
-          sendEmail({
-            to: member.email,
-            subject: `Hackmitten 3.0 — You're in. ${regId}`,
-            html: approvalEmailHtml({
-              participantName: member.fullName,
-              teamName: team.teamName,
-              registrationId: regId,
-              participantId: member.participantId ?? "",
-              passUrl,
-            }),
-            text: approvalEmailText({
-              participantName: member.fullName,
-              teamName: team.teamName,
-              registrationId: regId,
-              participantId: member.participantId ?? "",
-              passUrl,
-            }),
+      const leader = refreshed?.members.find((member) => member.isLeader);
+      if (!leader?.email || !leader.qrToken) {
+        console.error(`[email] approval email skipped for team ${team.teamName}: leader email or pass is missing`);
+      } else {
+        const passUrl = baseUrl ? `${baseUrl}/pass/${leader.qrToken}` : `/pass/${leader.qrToken}`;
+        sendEmail({
+          to: leader.email,
+          subject: "Hackmitten 3.0 — Team Approved",
+          html: approvalEmailHtml({
+            participantName: leader.fullName,
+            teamName: team.teamName,
+            registrationId: regId,
+            participantId: leader.participantId ?? "",
+            passUrl,
+            whatsappGroupUrl: "https://chat.whatsapp.com/CKjNXeNALPzAymQ0GhfMCj",
+          }),
+          text: approvalEmailText({
+            participantName: leader.fullName,
+            teamName: team.teamName,
+            registrationId: regId,
+            participantId: leader.participantId ?? "",
+            passUrl,
+            whatsappGroupUrl: "https://chat.whatsapp.com/CKjNXeNALPzAymQ0GhfMCj",
+          }),
+        })
+          .then((res) => {
+            if (!res.success) {
+              console.error(`[email] approval email failed for ${leader.email}: ${res.message} (provider: ${res.provider})`);
+            } else {
+              console.log(`[email] approval email sent to ${leader.email} via ${res.provider}`);
+            }
           })
-            .then((res) => {
-              if (!res.success) {
-                console.error(`[email] approval email failed for ${member.email}: ${res.message} (provider: ${res.provider})`);
-              } else {
-                console.log(`[email] approval email sent to ${member.email} via ${res.provider}`);
-              }
-            })
-            .catch((err) => console.error("[email] unexpected error for", member.email, err));
-        }
+          .catch((err) => console.error("[email] unexpected approval email error", err));
       }
     } else {
       console.log(`[email] skipping approval email for team ${team.teamName} — re-approval (registrationId ${team.registrationId} already existed)`);

@@ -115,6 +115,42 @@ describe("registrationSchema", () => {
     expect(res.success).toBe(false);
   });
 
+  it.each([
+    ["6", "6123456789"],
+    ["7", "7123456789"],
+    ["8", "8123456789"],
+    ["9", "9123456789"],
+  ])("accepts a 10-digit Indian mobile beginning with %s", (_prefix, phone) => {
+    const res = registrationSchema.safeParse({
+      teamName: "VALIDPHONE",
+      members: teamWithLeader([
+        validMember("Alice", "alice@gmail.com", true),
+        { ...validMember("Bob", "bob@gmail.com"), phone },
+        validMember("Carol", "carol@gmail.com"),
+      ]),
+    });
+    expect(res.success).toBe(true);
+  });
+
+  it.each([
+    ["0", "0123456789"],
+    ["1-5", "5123456789"],
+    ["9 digits", "987654321"],
+    ["11 digits", "98765432101"],
+    ["alphabetic characters", "abcdefghij"],
+    ["mixed characters", "98765abcde"],
+  ])("rejects invalid phone: %s", (_case, phone) => {
+    const res = registrationSchema.safeParse({
+      teamName: "INVALIDPHONE",
+      members: [
+        validMember("Alice", "alice@gmail.com", true),
+        { ...validMember("Bob", "bob@gmail.com"), phone },
+        validMember("Carol", "carol@gmail.com"),
+      ],
+    });
+    expect(res.success).toBe(false);
+  });
+
   it("rejects team name with invalid characters", () => {
     const res = registrationSchema.safeParse({
       teamName: "Bad@Team!",

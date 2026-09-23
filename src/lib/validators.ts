@@ -8,9 +8,7 @@ export const memberSchema = z.object({
     .refine((v) => v.toLowerCase().endsWith("@gmail.com"), "Email must be a @gmail.com address"),
   phone: z
     .string()
-    .min(10, "Phone must be exactly 10 digits")
-    .max(10, "Phone must be exactly 10 digits")
-    .regex(/^\d{10}$/, "Phone must be exactly 10 digits (numbers only)"),
+    .regex(/^[6-9][0-9]{9}$/, "Phone must be a valid 10-digit Indian mobile number"),
   college: z.string().min(2, "College name required").max(150),
   degree: z.string().max(60).optional().or(z.literal("")),
   isLeader: z.boolean().default(false),

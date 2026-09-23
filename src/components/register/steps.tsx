@@ -158,7 +158,7 @@ export function StepMembers() {
   const memberValid = (m: typeof members[0]) =>
     m.fullName.trim().length >= 2 &&
     m.email.toLowerCase().trim().endsWith("@gmail.com") &&
-    /^\d{10}$/.test(m.phone.trim()) &&
+    /^[6-9][0-9]{9}$/.test(m.phone.trim()) &&
     m.college.trim().length >= 2;
 
   const allValid = members.every(memberValid);
@@ -232,8 +232,8 @@ export function StepMembers() {
                   {m.email.trim().length > 0 && !m.email.toLowerCase().trim().endsWith("@gmail.com") && (
                     <div className="text-xs text-[#D83A43]">• Email must be a @gmail.com address</div>
                   )}
-                  {m.phone.trim().length > 0 && !/^\d{10}$/.test(m.phone.trim()) && (
-                    <div className="text-xs text-[#D83A43]">• Phone must be exactly 10 digits (numbers only)</div>
+                  {m.phone.trim().length > 0 && !/^[6-9][0-9]{9}$/.test(m.phone.trim()) && (
+                    <div className="text-xs text-[#D83A43]">• Phone must be exactly 10 digits and start with 6, 7, 8, or 9</div>
                   )}
                   {m.college.trim().length > 0 && m.college.trim().length < 2 && (
                     <div className="text-xs text-[#D83A43]">• College name is required</div>
@@ -280,7 +280,7 @@ export function StepMembers() {
           <div className="text-xs font-semibold text-[#D83A43] mb-2">Complete these to continue:</div>
           <div className="space-y-1">
             {!allValid && (
-              <div className="text-xs text-[#A8A8A8]">• Fill in all member fields correctly (name, @gmail.com email, 10-digit phone, college)</div>
+              <div className="text-xs text-[#A8A8A8]">• Fill in all member fields correctly (name, @gmail.com email, valid Indian mobile number, college)</div>
             )}
             {hasDuplicate && (
               <div className="text-xs text-[#A8A8A8]">• Each member must have a unique email</div>

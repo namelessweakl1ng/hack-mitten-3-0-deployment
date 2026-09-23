@@ -64,3 +64,21 @@ skills/
 .zscripts/
 mini-services/
 .private-uploads/
+
+# Local/editor configuration
+.idea/
+.vscode/
+.mcp.json
+
+# Local shell configuration
+.bash_profile
+.bashrc
+.gitconfig
+.profile
+.zprofile
+.zshrc
+.ripgreprc
+
+# Local IDE directories
+/.idea/
+/.vscode/

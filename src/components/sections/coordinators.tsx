@@ -1,12 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { COORDINATORS } from "@/data/coordinators";
 
 type Coordinator = {
   id: string;
   name: string;
   role: string;
   department: string | null;
+  qualification: string | null;
   type: "STUDENT" | "FACULTY";
   phone: string | null;
   email: string | null;
@@ -17,14 +19,37 @@ type Coordinator = {
 };
 
 export function Coordinators() {
-  const { data } = useQuery<{ coordinators: Coordinator[] }>({
+  const { data, error } = useQuery<{ coordinators: Coordinator[] }>({
     queryKey: ["coordinators"],
     queryFn: async () => {
       const r = await fetch("/api/coordinators");
+      if (!r.ok) throw new Error("Failed to load coordinators");
       return r.json();
     },
   });
-  const coordinators = data?.coordinators ?? [];
+
+  const databaseCoordinators = data?.coordinators ?? [];
+
+  const coordinators: Coordinator[] =
+    error
+      ? []
+      : databaseCoordinators.length > 0
+      ? databaseCoordinators
+      : COORDINATORS.map((c, index) => ({
+          id: `static-coordinator-${index}`,
+          name: c.name,
+          role: c.role,
+          department: c.department,
+          qualification: c.qualification ?? null,
+          type: c.type,
+          phone: c.phone,
+          email: c.email,
+          photoUrl: c.image,
+          linkedinUrl: null,
+          githubUrl: null,
+          isLead: c.isLead ?? false,
+        }));
+
   const students = coordinators.filter((c) => c.type === "STUDENT");
   const faculty = coordinators.filter((c) => c.type === "FACULTY");
 
@@ -111,6 +136,11 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
           {c.name}
         </h3>
         <div className="text-[10px] sm:text-xs text-[#B52A32] mt-0.5 truncate">{c.role}</div>
+        {c.type === "FACULTY" && c.qualification && (
+          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] truncate">
+            {c.qualification}
+          </div>
+        )}
         {c.department && (
           <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] truncate">{c.department}</div>
         )}

@@ -2,8 +2,8 @@
  * Convert a local wall-clock date/time in an IANA timezone into a UTC ISO string.
  *
  * Example:
- *   2026-10-28 11:00 Asia/Kolkata
- *   -> 2026-10-28T05:30:00.000Z
+ *   2026-10-29 11:00 Asia/Kolkata
+ *   -> 2026-10-29T05:30:00.000Z
  *
  * Uses Intl instead of adding a timezone dependency.
  */

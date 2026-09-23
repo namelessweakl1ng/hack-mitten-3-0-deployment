@@ -44,7 +44,7 @@ export function About() {
   const STATS = [
     { value: cfg?.aboutStatDuration ?? "24", label: "HOURS", suffix: "" },
     { value: cfg?.aboutStatTeamSize ?? "3—4", label: "MEMBERS", suffix: "" },
-    { value: cfg?.aboutStatFee ?? "₹800", label: "REGISTRATION", suffix: "" },
+    { value: cfg?.aboutStatFee ?? "₹1,000", label: "REGISTRATION", suffix: "" },
     { value: cfg?.aboutStatPrize ?? "₹1,00,000", label: "PRIZE POOL", suffix: "" },
   ];
 

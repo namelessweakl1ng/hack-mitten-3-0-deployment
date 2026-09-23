@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { GALLERY } from "@/data/gallery";
 
 type GalleryItem = {
   id: string;
@@ -13,14 +14,29 @@ type GalleryItem = {
 };
 
 export function Gallery() {
-  const { data } = useQuery<{ items: GalleryItem[] }>({
+  const { data, error } = useQuery<{ items: GalleryItem[] }>({
     queryKey: ["gallery"],
     queryFn: async () => {
       const r = await fetch("/api/gallery");
+      if (!r.ok) throw new Error("Failed to load gallery");
       return r.json();
     },
   });
-  const items = data?.items ?? [];
+
+  const databaseItems = data?.items ?? [];
+
+  const items: GalleryItem[] =
+    error
+      ? []
+      : databaseItems.length > 0
+      ? databaseItems
+      : GALLERY.map((item, index) => ({
+          id: `static-gallery-${index}`,
+          title: item.title,
+          caption: item.caption || null,
+          imageUrl: item.image,
+          year: String(item.year),
+        }));
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);

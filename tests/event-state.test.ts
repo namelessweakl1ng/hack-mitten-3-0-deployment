@@ -9,13 +9,13 @@ import { composeIso } from "../src/lib/timezone";
 
 describe("computeEventState", () => {
   const baseConfig = {
-    eventStartDate: "2026-10-28",
+    eventStartDate: "2026-10-29",
     eventStartTime: "11:00",
     eventTimezone: "Asia/Kolkata",
     eventDurationHours: 24,
   
     // Registration closes exactly 7 days before the hackathon starts
-    registrationDeadline: "2026-10-21T05:30:00.000Z",
+    registrationDeadline: "2026-10-22T05:30:00.000Z",
   
     registrationOpens: null,
   };
@@ -36,14 +36,14 @@ describe("computeEventState", () => {
   });
 
   it("returns LIVE when now is between event start and end", () => {
-    const now = new Date("2026-10-28T12:00:00Z");
+    const now = new Date("2026-10-29T12:00:00Z");
     const state = computeEventState(baseConfig, now);
     expect(state.state).toBe("LIVE");
     expect(state.registrationOpen).toBe(false);
   });
 
   it("returns ENDED when now is after event end", () => {
-    const now = new Date("2026-10-30T00:00:00Z");
+    const now = new Date("2026-10-30T06:00:00Z");
     const state = computeEventState(baseConfig, now);
     expect(state.state).toBe("ENDED");
     expect(state.registrationOpen).toBe(false);
@@ -54,7 +54,7 @@ describe("computeEventState", () => {
     const state = computeEventState({
       ...baseConfig,
       registrationOpens: "2026-10-03T00:00:00Z",
-      registrationDeadline: "2026-10-21T05:30:00.000Z",
+      registrationDeadline: "2026-10-22T05:30:00.000Z",
     }, now);
     expect(state.state).toBe("UPCOMING");
     expect(state.registrationOpen).toBe(false);
@@ -81,15 +81,15 @@ describe("computeEventState", () => {
   it("converts Asia/Kolkata wall-clock time to the correct UTC instant", () => {
     const state = computeEventState(baseConfig);
 
-    expect(state.eventStartIso).toBe("2026-10-28T05:30:00.000Z");
-    expect(state.eventEndIso).toBe("2026-10-29T05:30:00.000Z");
+    expect(state.eventStartIso).toBe("2026-10-29T05:30:00.000Z");
+    expect(state.eventEndIso).toBe("2026-10-30T05:30:00.000Z");
   });
 
   it("keeps the registration deadline independently configurable", () => {
     const state = computeEventState(baseConfig);
 
     expect(state.registrationDeadlineIso).toBe(
-      "2026-10-21T05:30:00.000Z",
+      "2026-10-22T05:30:00.000Z",
     );
   });
 
@@ -105,8 +105,8 @@ describe("computeEventState", () => {
 
   it("converts phase wall-clock times using the configured timezone", () => {
     expect(
-      composeIso("2026-10-28", "11:00", "Asia/Kolkata"),
-    ).toBe("2026-10-28T05:30:00.000Z");
+      composeIso("2026-10-29", "11:00", "Asia/Kolkata"),
+    ).toBe("2026-10-29T05:30:00.000Z");
   });
 
   it("handles a timezone transition when converting wall-clock time", () => {

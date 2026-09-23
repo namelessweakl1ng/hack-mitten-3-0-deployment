@@ -68,7 +68,7 @@ model EventConfig {
 
   // Registration
   registrationDeadline String  @default("") // ISO datetime string
-  registrationFee      String  @default("₹800")
+  registrationFee      String  @default("₹1,000")
   prizePool            String  @default("₹1,00,000")
   // Registration capacity & manual open/close toggle
   registrationCapacity Int     @default(60)
@@ -88,7 +88,7 @@ model EventConfig {
   aboutDescription  String @default("Hackmitten is not a hackathon. It is a descent into the unknown — a place where ideas cross the event horizon and emerge as something built, broken, and rebuilt into existence.")
   aboutStatDuration String @default("24")
   aboutStatTeamSize String @default("3—4")
-  aboutStatFee      String @default("₹800")
+  aboutStatFee      String @default("₹1,000")
   aboutStatPrize    String @default("₹1,00,000")
   aboutStatVenue    String @default("MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA")
 

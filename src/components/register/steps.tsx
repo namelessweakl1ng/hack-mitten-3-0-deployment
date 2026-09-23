@@ -368,7 +368,8 @@ export function StepPayment() {
     queryFn: async () => (await fetch("/api/config")).json(),
   });
   const cfg = cfgData?.config;
-  const fee = cfg?.registrationFee ?? "₹800";
+  const fee = cfg?.registrationFee ?? "₹1,000";
+  const qrUrl = cfg?.upiQrUrl || "/images/QRcode/payment-qr.png";
 
   const validTxn = transactionId.trim().length >= 4 && transactionId.trim().length <= 100;
   const valid = validTxn && screenshot !== null;
@@ -449,15 +450,8 @@ export function StepPayment() {
             </button>
           </div>
           <div className="flex items-center justify-center">
-            <div className="aspect-square w-36 h-36 md:w-40 md:h-40 bg-white p-2 rounded">
-              <div className="w-full h-full grid place-items-center bg-[#0a0a0a] text-[#A8A8A8] text-xs text-center p-2">
-                {cfg?.upiQrUrl ? (
-                   
-                  <img src={cfg.upiQrUrl} alt="UPI QR" className="w-full h-full object-contain" />
-                ) : (
-                  <span>UPI QR<br/>(replace via admin)</span>
-                )}
-              </div>
+            <div className="aspect-square w-44 max-w-full bg-white p-2 rounded">
+              <img src={qrUrl} alt="Payment QR code" className="block h-full w-full object-contain" />
             </div>
           </div>
         </div>

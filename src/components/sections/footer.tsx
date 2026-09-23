@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { HACKMITTEN_EVENT } from "@/lib/event-config";
 
 type EventConfig = {
   eventName: string;
@@ -100,6 +101,17 @@ export function Footer() {
                   LinkedIn
                 </a>
               )}
+            </div>
+
+            <div>
+              <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mb-3">
+                Website Team
+              </div>
+              <div className="space-y-1 text-white/80">
+                {HACKMITTEN_EVENT.websiteTeam.map((member) => (
+                  <div key={member}>{member}</div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

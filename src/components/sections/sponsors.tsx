@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { SPONSORS } from "@/data/sponsors";
 
 type Sponsor = {
   id: string;
@@ -31,11 +32,32 @@ const TIER_SIZE: Record<string, string> = {
 };
 
 export function Sponsors() {
-  const { data } = useQuery<{ sponsors: Sponsor[] }>({
+  const { data, error } = useQuery<{ sponsors: Sponsor[] }>({
     queryKey: ["sponsors"],
-    queryFn: async () => (await fetch("/api/sponsors")).json(),
+    queryFn: async () => {
+      const r = await fetch("/api/sponsors");
+      if (!r.ok) throw new Error("Failed to load sponsors");
+      return r.json();
+    },
   });
-  const sponsors: Sponsor[] = data?.sponsors ?? [];
+
+  const databaseSponsors = data?.sponsors ?? [];
+
+  const sponsors: Sponsor[] =
+    error
+      ? []
+      : databaseSponsors.length > 0
+      ? databaseSponsors
+      : SPONSORS.map((s, index) => ({
+          id: `static-sponsor-${index}`,
+          name: s.name,
+          logoUrl: s.logo,
+          websiteUrl: s.website,
+          tier: s.tier as Sponsor["tier"],
+          customTier: null,
+          sortOrder: index,
+        }));
+
   if (sponsors.length === 0) return null;
 
   // Group by tier
@@ -81,13 +103,13 @@ export function Sponsors() {
                     rel="noreferrer"
                     className="group bg-[#151515] border border-white/10 rounded-lg p-5 md:p-6 flex flex-col items-center justify-center gap-3 transition-colors hover:border-[#B52A32]/40"
                   >
-                    <div className={`${TIER_SIZE[group.tier]} aspect-[3/2] flex items-center justify-center w-full`}>
+                    <div className={`${TIER_SIZE[group.tier]} w-full flex items-center justify-center overflow-hidden`}>
                       {s.logoUrl ? (
                         <img
                           src={s.logoUrl}
                           alt={`${s.name} logo`}
                           loading="lazy"
-                          className="max-h-full max-w-full object-contain opacity-100"
+                          className="h-full w-full object-contain opacity-100"
                         />
                       ) : (
                         <span className="display text-lg font-bold text-[#A8A8A8]/40">{s.name}</span>

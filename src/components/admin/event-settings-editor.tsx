@@ -138,7 +138,7 @@ export function EventSettingsEditor() {
       {/* Registration */}
       <Section title="Registration">
         <Field label="Registration Deadline (ISO datetime)" value={form.registrationDeadline} onChange={(v) => update("registrationDeadline", v)} />
-        <Field label="Registration Fee" value={form.registrationFee} onChange={(v) => update("registrationFee", v)} placeholder="₹800" />
+        <Field label="Registration Fee" value={form.registrationFee} onChange={(v) => update("registrationFee", v)} placeholder="₹1,000" />
         <Field label="Prize Pool" value={form.prizePool} onChange={(v) => update("prizePool", v)} placeholder="₹1,00,000" />
       </Section>
 

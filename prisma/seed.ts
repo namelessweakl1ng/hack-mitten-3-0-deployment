@@ -25,6 +25,7 @@
 import { PrismaClient, Role, MealType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { generateBerserkSecret } from "../src/lib/constants";
+import { ensureSingletonEventConfig, ensureSuperAdminBootstrap } from "../src/lib/bootstrap";
 
 const db = new PrismaClient();
 
@@ -64,25 +65,17 @@ async function main() {
     console.warn("─────────────────────────────────────────────────────────────────────\n");
   }
 
-  const adminHash = await bcrypt.hash(adminPassword, 12);
   const berserkHash = await bcrypt.hash(berserkSecret, 12);
 
-  await db.user.upsert({
-    where: { username: adminUsername },
-    update: {
-      email: adminEmail,
-      passwordHash: adminHash,
-      recoveryHash: berserkHash,
-      role: Role.SUPER_ADMIN,
-    },
-    create: {
-      username: adminUsername,
-      email: adminEmail,
-      name: "Super Admin",
-      role: Role.SUPER_ADMIN,
-      passwordHash: adminHash,
-      recoveryHash: berserkHash,
-    },
+  const superAdmin = await ensureSuperAdminBootstrap({
+    username: adminUsername,
+    email: adminEmail,
+    password: adminPassword,
+  });
+
+  await db.user.update({
+    where: { id: superAdmin.id },
+    data: { recoveryHash: berserkHash },
   });
   console.log(`  ✓ super admin (${adminUsername})`);
 
@@ -131,50 +124,8 @@ async function main() {
   }
 
   // ─── Event config singleton ────────────────────────────────────────────
-  await db.eventConfig.upsert({
-    where: { id: "singleton" },
-    update: {},
-    create: {
-      id: "singleton",
-      eventName: "Hackmitten 3.0",
-      edition: "3.0",
-      tagline: "IDEAS BEYOND THE HORIZON",
-      description: "24 hours. Real problems. Limitless possibilities.",
-      eventStartDate: "2026-10-29",
-      eventStartTime: "11:00",
-      eventEndDate: "2026-10-30",
-      eventEndTime: "11:00",
-      eventTimezone: "Asia/Kolkata",
-      eventDurationHours: 24,
-      registrationDeadline: "2026-10-22T05:30:00.000Z",
-      registrationFee: "₹1,000",
-      prizePool: "₹1,00,000",
-      registrationCapacity: 60,
-      registrationsOpen: true,
-      heroHeading: "HACKMITTEN",
-      heroEdition: "3.0",
-      heroSubtitle: "IDEAS BEYOND THE HORIZON | NATIONAL LEVEL HACKATHON",
-      heroDescription: "24 hours. Real problems. Limitless possibilities.",
-      heroCtaText: "REGISTER NOW",
-      heroCtaLink: "/register",
-      heroVisible: true,
-      aboutHeading: "BUILD. BREAK. REBUILD.",
-      aboutDescription: "Hackmitten is a 24-hour descent into the unknown, where ideas cross the event horizon and emerge as something built, broken, and rebuilt into existence.",
-      aboutStatDuration: "24",
-      aboutStatTeamSize: "3—4",
-      aboutStatFee: "₹1,000",
-      aboutStatPrize: "₹1,00,000",
-      aboutStatVenue: "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA",
-      footerText: "SEE YOU AT THE EVENT HORIZON.",
-      collegeName: "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA",
-      contactEmail: "hodcse@mitt.edu.in",
-      upiId: "",
-      winnersVisible: false,
-      winnersHeading: "THE MISSION IS COMPLETE.",
-      winnersSubheading: "MEET THE WINNERS.",
-    },
-  });
-  console.log("  ✓ event config seeded with production Hackmitten defaults");
+  const eventCfg = await ensureSingletonEventConfig();
+  console.log(`  ✓ event config ready (${eventCfg.id})`);
 
   // ─── Default meals ──────────────────────────────────────────────────────
   const meals = [

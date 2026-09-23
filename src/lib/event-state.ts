@@ -135,10 +135,11 @@ export function computeEventState(cfg: {
  * Fetch the current EventStateInfo from the database.
  * Use this in server components / API routes.
  */
-export async function getEventState(): Promise<EventStateInfo> {
-  const cfg = await db.eventConfig.findUnique({ where: { id: "singleton" } });
+export async function getEventState(
+  database: Pick<typeof db, "eventConfig" | "team"> = db,
+): Promise<EventStateInfo> {
+  const cfg = await database.eventConfig.findUnique({ where: { id: "singleton" } });
   if (!cfg) {
-    // No config — treat as upcoming with no registration
     return {
       state: "UPCOMING",
       eventStartIso: null,
@@ -149,15 +150,14 @@ export async function getEventState(): Promise<EventStateInfo> {
       timezone: "Asia/Kolkata",
       registrationOpen: false,
       registrationMessage: "Event not configured.",
-      registrationsOpen: true,
+      registrationsOpen: false,
       registrationCapacity: 60,
       currentCount: 0,
       registrationAvailable: false,
     };
   }
 
-  // Count current teams (a cheap query against the Team table)
-  const currentCount = await db.team.count();
+  const currentCount = await database.team.count();
 
   return computeEventState({
     ...cfg,

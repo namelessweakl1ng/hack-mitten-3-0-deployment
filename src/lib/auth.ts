@@ -9,6 +9,55 @@ import { db } from "@/lib/db";
 // we add it via an intersection.
 type AuthOptionsWithTrustHost = NextAuthOptions & { trustHost?: boolean };
 
+type UserLike = {
+  id: string;
+  username: string;
+  email: string;
+  role: import("@prisma/client").Role;
+  passwordHash: string;
+};
+
+export function roleMatchesSelectedRole(
+  selectedRole: string | null | undefined,
+  userRole: import("@prisma/client").Role | string,
+): boolean {
+  const normalizedSelection = String(selectedRole ?? "").trim().toUpperCase();
+  const normalizedUserRole = String(userRole ?? "").trim().toUpperCase();
+
+  if (normalizedSelection === "ADMIN" || normalizedSelection === "SUPER_ADMIN") {
+    return normalizedUserRole === "SUPER_ADMIN";
+  }
+
+  if (normalizedSelection === "COORDINATOR") {
+    return normalizedUserRole === "COORDINATOR";
+  }
+
+  if (normalizedSelection === "FOOD" || normalizedSelection === "FOOD_ADMIN") {
+    return normalizedUserRole === "FOOD_ADMIN";
+  }
+
+  return false;
+}
+
+export async function verifyPasswordAndRole({
+  identifier,
+  password,
+  selectedRole,
+  user,
+}: {
+  identifier: string | null | undefined;
+  password: string | null | undefined;
+  selectedRole: string | null | undefined;
+  user: UserLike | null;
+}): Promise<boolean> {
+  if (!identifier || !password || !user) return false;
+
+  const passwordOk = await bcrypt.compare(password, user.passwordHash);
+  if (!passwordOk) return false;
+
+  return roleMatchesSelectedRole(selectedRole, user.role);
+}
+
 export const authOptions: AuthOptionsWithTrustHost = {
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 7 }, // 7 days
   pages: {
@@ -24,9 +73,10 @@ export const authOptions: AuthOptionsWithTrustHost = {
       },
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password || !credentials?.role) return null;
+
         const id = String(credentials.identifier).trim();
         const selectedRole = String(credentials.role);
-        // Try matching by email (lowercased) OR exact username (case-sensitive)
+
         const user = await db.user.findFirst({
           where: {
             OR: [
@@ -35,17 +85,24 @@ export const authOptions: AuthOptionsWithTrustHost = {
             ],
           },
         });
+
         if (!user) return null;
-        const ok = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!ok) return null;
 
-        const roleMatches =
-          (selectedRole === "ADMIN" && user.role === "SUPER_ADMIN") ||
-          (selectedRole === "COORDINATOR" && user.role === "COORDINATOR") ||
-          (selectedRole === "FOOD" && user.role === "FOOD_ADMIN");
+        const passwordAndRoleValid = await verifyPasswordAndRole({
+          identifier: id,
+          password: String(credentials.password),
+          selectedRole,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            passwordHash: user.passwordHash,
+          },
+        });
 
-        if (!roleMatches) {
-          console.warn("[auth] login rejected: selected role does not match account role");
+        if (!passwordAndRoleValid) {
+          console.warn("[auth] login rejected: invalid password or mismatched role");
           return null;
         }
 

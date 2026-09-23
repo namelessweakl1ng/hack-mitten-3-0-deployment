@@ -4,6 +4,7 @@ import { requirePermission, jsonError } from "@/lib/api-auth";
 import { writeAudit } from "@/lib/audit";
 import { recordChange, snapshotRow } from "@/lib/change-history";
 import { storeImage, UploadError } from "@/lib/upload";
+import { ensureSingletonEventConfig } from "@/lib/bootstrap";
 
 const ALLOWED_STRING_FIELDS = [
   "eventName", "edition", "tagline", "description",
@@ -101,8 +102,11 @@ export async function PATCH(req: Request) {
       }
     }
 
+    const existing = await db.eventConfig.findUnique({ where: { id: "singleton" } });
+    const current = existing ?? (await ensureSingletonEventConfig());
+
     // Capture previous state for rollback
-    const previous = await db.eventConfig.findUnique({ where: { id: "singleton" } });
+    const previous = current;
     const previousSnapshot = previous ? snapshotRow(previous) : null;
 
     const updated = await db.eventConfig.update({

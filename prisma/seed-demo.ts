@@ -1,7 +1,9 @@
 /**
  * Hackmitten 3.0 — LOCAL-ONLY demo seed.
  *
- * Creates dummy content for local development / staging:
+ * Creates synthetic content for local development / staging only.
+ * Image/logo fields intentionally remain empty so demo data cannot
+ * introduce third-party placeholder assets into the application.
  *   - Hackathon phases (24-hour timeline)
  *   - Coordinators (student + faculty, with one lead)
  *   - Gallery items grouped by year
@@ -14,7 +16,8 @@
  * Does not create admin accounts — run `bun run prisma/seed.ts` first.
  * Does not write to .env.local or any file.
  *
- * Usage: bun run prisma/seed-demo.ts
+ * Usage:
+ *   ALLOW_DEMO_SEED=1 bun run prisma/seed-demo.ts
  */
 import { PrismaClient, Role, RegistrationStatus, PaymentStatus, MealType, CoordinatorType, SponsorTier } from "@prisma/client";
 import {
@@ -24,21 +27,6 @@ import {
 } from "../src/lib/constants";
 
 const db = new PrismaClient();
-
-function placeholderPortrait(name: string): string {
-  const seed = encodeURIComponent(name);
-  return `https://api.dicebear.com/9.x/initials/svg?seed=${seed}&backgroundColor=151515&textColor=F2F2F2`;
-}
-
-function placeholderGallery(title: string): string {
-  const seed = encodeURIComponent(title);
-  return `https://picsum.photos/seed/${seed}/800/1000`;
-}
-
-function placeholderSponsor(name: string): string {
-  const seed = encodeURIComponent(name);
-  return `https://api.dicebear.com/9.x/initials/svg?seed=${seed}&backgroundColor=252525&textColor=F2F2F2`;
-}
 
 async function main() {
   if (process.env.NODE_ENV === "production") {
@@ -169,7 +157,7 @@ async function main() {
         type: c.type,
         phone: c.phone ?? null,
         email: c.email,
-        photoUrl: placeholderPortrait(c.name),
+        photoUrl: null,
         isLead: c.isLead ?? false,
         sortOrder: c.sortOrder,
       },
@@ -197,7 +185,7 @@ async function main() {
         id,
         title: g.title,
         caption: g.caption,
-        imageUrl: placeholderGallery(g.title),
+        imageUrl: "",
         year: g.year,
         sortOrder: g.sortOrder,
         visible: true,
@@ -208,12 +196,12 @@ async function main() {
 
   // ─── Sponsors ───────────────────────────────────────────────────────────
   const sponsors = [
-    { name: "TechCorp India", tier: SponsorTier.TITLE, customTier: null, website: "https://example.com/techcorp", order: 0 },
-    { name: "Quantum Systems", tier: SponsorTier.PLATINUM, customTier: null, website: "https://example.com/quantum", order: 1 },
-    { name: "NebulaSoft", tier: SponsorTier.GOLD, customTier: null, website: "https://example.com/nebulasoft", order: 2 },
-    { name: "Orbit Labs", tier: SponsorTier.GOLD, customTier: null, website: "https://example.com/orbit", order: 3 },
-    { name: "Pulsar Foods", tier: SponsorTier.SILVER, customTier: null, website: "https://example.com/pulsar", order: 4 },
-    { name: "MIT Thandavapura", tier: SponsorTier.PARTNER, customTier: null, website: "https://mit.thandavapura.edu.in", order: 5 },
+    { name: "TechCorp India", tier: SponsorTier.TITLE, customTier: null, website: null, order: 0 },
+    { name: "Quantum Systems", tier: SponsorTier.PLATINUM, customTier: null, website: null, order: 1 },
+    { name: "NebulaSoft", tier: SponsorTier.GOLD, customTier: null, website: null, order: 2 },
+    { name: "Orbit Labs", tier: SponsorTier.GOLD, customTier: null, website: null, order: 3 },
+    { name: "Pulsar Foods", tier: SponsorTier.SILVER, customTier: null, website: null, order: 4 },
+    { name: "MIT Thandavapura", tier: SponsorTier.PARTNER, customTier: null, website: null, order: 5 },
   ];
   for (const s of sponsors) {
     const id = `sponsor_${s.name.replace(/\W+/g, "_").toLowerCase()}`;
@@ -223,7 +211,7 @@ async function main() {
       create: {
         id,
         name: s.name,
-        logoUrl: placeholderSponsor(s.name),
+        logoUrl: "",
         websiteUrl: s.website,
         tier: s.tier,
         customTier: s.customTier,
@@ -253,7 +241,7 @@ async function main() {
         teamName: w.teamName,
         prize: w.prize,
         description: w.description,
-        imageUrl: placeholderGallery(w.teamName),
+        imageUrl: "",
         sortOrder: w.order,
         visible: true,
       },

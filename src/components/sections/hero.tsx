@@ -48,8 +48,8 @@ export function Hero() {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#030303] pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col items-center w-full max-w-4xl">
-        <div className="mb-6 flex items-center gap-3 flex-wrap justify-center">
+      <div className="hero-content-depth relative z-10 flex flex-col items-center w-full max-w-4xl">
+        <div className="hero-reveal hero-reveal-delay-1 mb-6 flex items-center gap-3 flex-wrap justify-center">
           <span className="h-px w-8 md:w-10 bg-[#B52A32]" />
           <span className="mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#A8A8A8] text-center">
             {cfg?.eventDurationHours ?? 24} Hours · Real Problems
@@ -57,12 +57,12 @@ export function Hero() {
           <span className="h-px w-8 md:w-10 bg-[#B52A32]" />
         </div>
 
-        <h1 className="display text-[16vw] sm:text-[14vw] leading-[0.85] font-bold tracking-tight text-white md:text-[12vw] lg:text-[10rem]">
+        <h1 className="hero-title hero-reveal hero-reveal-delay-2 display text-[16vw] sm:text-[14vw] leading-[0.85] font-bold tracking-tight text-white md:text-[12vw] lg:text-[10rem]">
           <span className="block">{heading}</span>
-          <span className="block text-[#B52A32] text-glow-red">{edition}</span>
+          <span className="hero-edition block text-[#B52A32] text-glow-red">{edition}</span>
         </h1>
 
-        <p className="display mt-6 text-xl md:text-3xl font-light tracking-tight text-white/90">
+        <p className="hero-reveal hero-reveal-delay-3 display mt-6 text-xl md:text-3xl font-light tracking-tight text-white/90">
           {subtitleLines.length > 1 ? (
             <>
               {subtitleLines[0]}
@@ -74,17 +74,19 @@ export function Hero() {
           )}
         </p>
 
-        <p className="mt-6 max-w-md text-sm md:text-base text-[#A8A8A8]">
+        <p className="hero-reveal hero-reveal-delay-4 mt-6 max-w-md text-sm md:text-base text-[#A8A8A8]">
           {description}
         </p>
 
-        <Countdown />
+        <div className="hero-reveal hero-reveal-delay-4">
+          <Countdown />
+        </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row gap-3">
+        <div className="hero-reveal hero-reveal-delay-5 mt-10 flex flex-col sm:flex-row gap-3">
           {regOpen && !isFull ? (
             <Link
               href={ctaLink}
-              className="group flex items-center justify-center gap-2 rounded-full bg-[#B52A32] px-6 md:px-8 py-3.5 text-sm font-semibold tracking-wide text-white transition-all hover:bg-[#D83A43] hover:shadow-[0_0_40px_-8px_rgba(216,58,67,0.8)] min-h-[44px]"
+              className="hero-primary-cta group flex items-center justify-center gap-2 rounded-full bg-[#B52A32] px-6 md:px-8 py-3.5 text-sm font-semibold tracking-wide text-white transition-all hover:bg-[#D83A43] hover:shadow-[0_0_40px_-8px_rgba(216,58,67,0.8)] min-h-[44px]"
             >
               {ctaText}
               <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>

@@ -25,7 +25,7 @@ export function Reveal({
     ).matches;
 
     if (reduced) {
-      setVisible(true);
+      node.classList.add("is-visible");
       return;
     }
 

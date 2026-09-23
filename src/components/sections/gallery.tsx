@@ -34,22 +34,17 @@ export function Gallery() {
   useEffect(() => {
     if (items.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
-      if (!pausedRef.current) setActiveIdx((i) => i + 1);
+      if (!pausedRef.current) {
+        setActiveIdx((i) => {
+          const next = i + 1;
+          return next >= items.length * 3
+            ? next - items.length
+            : next;
+        });
+      }
     }, 3200);
     return () => window.clearInterval(timer);
   }, [items.length]);
-
-  useEffect(() => {
-    if (items.length < 2) return;
-    if (activeIdx >= items.length) {
-      const timer = window.setTimeout(() => setActiveIdx((i) => i - items.length), 550);
-      return () => window.clearTimeout(timer);
-    }
-    if (activeIdx < 0) {
-      const timer = window.setTimeout(() => setActiveIdx((i) => i + items.length), 550);
-      return () => window.clearTimeout(timer);
-    }
-  }, [activeIdx, items.length]);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -66,12 +61,23 @@ export function Gallery() {
 
   const goNext = useCallback(() => {
     pausedRef.current = true;
-    setActiveIdx((i) => i + 1);
+    setActiveIdx((i) => {
+      const next = i + 1;
+      return items.length > 0 && next >= items.length * 3
+        ? next - items.length
+        : next;
+    });
   }, [items.length]);
+
   const goPrev = useCallback(() => {
     pausedRef.current = true;
-    setActiveIdx((i) => i - 1);
-  }, []);
+    setActiveIdx((i) => {
+      const next = i - 1;
+      return items.length > 0 && next <= -items.length
+        ? next + items.length
+        : next;
+    });
+  }, [items.length]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     pausedRef.current = true;
@@ -96,13 +102,22 @@ export function Gallery() {
   const slotWidth = activeWidth;
   const gap = isMobile ? 4 : 24;
 
+  // Keep several copies around the active image so the carousel can
+  // move continuously without visibly travelling back to the first image.
+  const loopedItems = [
+    ...items,
+    ...items,
+    ...items,
+    ...items,
+    ...items,
+  ];
+  const loopCenter = items.length * 2;
+  const visualActiveIdx = activeIdx + loopCenter;
+
   // Track offset to center the active item
   const trackOffset = viewportWidth > 0
-    ? viewportWidth / 2 - ((activeIdx + items.length) * (slotWidth + gap) + slotWidth / 2)
+    ? viewportWidth / 2 - ((activeIdx + loopCenter) * (slotWidth + gap) + slotWidth / 2)
     : 0;
-
-  const loopedItems = [...items, ...items, ...items];
-  const visualActiveIdx = activeIdx + items.length;
 
   // Mobile: no fixed viewport height — let the image aspect ratio define the height
   // Desktop: keep the cinematic fixed height
@@ -127,7 +142,7 @@ export function Gallery() {
             <div className="flex gap-2">
               <button
                 onClick={goPrev}
-                disabled={safeActiveIdx === 0}
+                disabled={items.length < 2}
                 aria-label="Previous image"
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white disabled:opacity-30 hover:border-[#B52A32] hover:bg-white/5 transition-all"
               >
@@ -135,7 +150,7 @@ export function Gallery() {
               </button>
               <button
                 onClick={goNext}
-                disabled={safeActiveIdx >= items.length - 1}
+                disabled={items.length < 2}
                 aria-label="Next image"
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white disabled:opacity-30 hover:border-[#B52A32] hover:bg-white/5 transition-all"
               >
@@ -179,9 +194,7 @@ export function Gallery() {
                 const distance = Math.abs(i - visualActiveIdx);
                 const isActive = distance === 0;
                 const scale = isActive ? 1.0 : distance === 1 ? 0.72 : 0.55;
-                const grayscale = isActive ? 0 : distance === 1 ? 0.5 : 0.85;
-                const brightness = isActive ? 1 : 0.7;
-                const opacity = isActive ? 1 : distance === 1 ? 0.5 : 0.25;
+                 const opacity = isActive ? 1 : distance === 1 ? 0.5 : 0.25;
                 const zIndex = isActive ? 10 : Math.max(1, 5 - distance);
 
                 return (
@@ -194,7 +207,13 @@ export function Gallery() {
                       opacity,
                       zIndex,
                     }}
-                    onClick={() => setActiveIdx(i - items.length)}
+                    onClick={() => {
+                      pausedRef.current = true;
+                      setActiveIdx(i - loopCenter);
+                      window.setTimeout(() => {
+                        pausedRef.current = false;
+                      }, 2400);
+                    }}
                   >
                     <div
                       className={`relative overflow-hidden bg-[#080808] border transition-colors ${
@@ -212,10 +231,13 @@ export function Gallery() {
                         draggable={false}
                         className="absolute inset-0 h-full w-full object-cover transition-all duration-700"
                         style={{
-                          filter: `grayscale(${Math.min(1, grayscale + 0.15)}) contrast(1.12) brightness(${brightness * 0.92})`,
+                          filter: isActive
+                            ? "grayscale(0.22) sepia(0.16) saturate(0.82) contrast(1.08) brightness(0.88)"
+                            : "grayscale(0.62) sepia(0.22) saturate(0.62) contrast(1.04) brightness(0.68)",
                         }}
                       />
-                      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#8B1E24]/15 via-transparent to-black/35 mix-blend-multiply" />
+                      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#8B1E24]/20 via-transparent to-[#030303]/45 mix-blend-multiply" />
+                      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_35%,rgba(3,3,3,0.38)_100%)]" />
                       {isActive && (
                         <div className="absolute inset-0 pointer-events-none ring-1 ring-[#B52A32]/50" />
                       )}

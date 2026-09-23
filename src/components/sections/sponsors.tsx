@@ -87,13 +87,19 @@ export function Sponsors() {
                     key={s.id}
                     className="group bg-[#151515] border border-white/10 rounded-lg p-4 md:p-6 flex flex-col items-center justify-center gap-3 transition-colors hover:border-[#B52A32]/40"
                   >
-                    <div className={`${group.tier === "SUPPORTER" ? "aspect-square w-full max-w-[116px] md:max-w-[140px]" : `${TIER_SIZE[group.tier]} w-full`} overflow-hidden rounded border border-white/5 bg-[#0a0a0a] p-2`}>
+                    <div
+                      className={`${
+                        group.tier === "SUPPORTER"
+                          ? "aspect-square w-full max-w-[116px] md:max-w-[140px] rounded-full bg-white"
+                          : `${TIER_SIZE[group.tier]} w-full`
+                      } overflow-hidden flex items-center justify-center`}
+                    >
                       {s.logoUrl ? (
                         <img
                           src={s.logoUrl}
                           alt={`${s.name} logo`}
                           loading="lazy"
-                          className="h-full w-full object-contain opacity-100"
+                          className="h-full w-full object-contain"
                         />
                       ) : (
                         <span className="display text-lg font-bold text-[#A8A8A8]/40">{s.name}</span>

@@ -1,5 +1,5 @@
 /**
- * Hackmitten 3.0 — Development demo seed.
+ * Hackmitten 3.0 — LOCAL-ONLY demo seed.
  *
  * Creates dummy content for local development / staging:
  *   - Hackathon phases (24-hour timeline)
@@ -44,6 +44,12 @@ async function main() {
   if (process.env.NODE_ENV === "production") {
     console.error("\n[FATAL] seed-demo refuses to run with NODE_ENV=production.");
     console.error("Demo data must never be loaded into a production database.\n");
+    process.exit(1);
+  }
+
+  if (process.env.ALLOW_DEMO_SEED !== "1") {
+    console.error("\n[FATAL] Demo seed is disabled by default.");
+    console.error("Set ALLOW_DEMO_SEED=1 only for an intentional local/staging demo database.\n");
     process.exit(1);
   }
 

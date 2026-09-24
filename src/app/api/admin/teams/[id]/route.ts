@@ -8,7 +8,7 @@ import { z } from "zod";
 /**
  * PATCH /api/admin/teams/:id
  * Edit a team (name, college, member info). SUPER_ADMIN only.
- * Body: { teamName?, college?, members?: [{id?, fullName, email, phone, college, isLeader}] }
+ * Body: { teamName?, college?, members?: [{id?, fullName, email, phone, college}] }
  */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -41,18 +41,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         phone: z.string().min(10).max(15).regex(/^[+]?[\d\s\-()]+$/),
         college: z.string().min(2).max(150),
         degree: z.string().max(60).optional().or(z.literal("")),
-        isLeader: z.boolean(),
       })).min(3, "Minimum 3 members").max(4, "Maximum 4 members");
 
       const parsed = membersSchema.safeParse(body.members);
       if (!parsed.success) {
         return NextResponse.json({ error: "Invalid members", issues: parsed.error.issues }, { status: 400 });
       }
-      const leaderCount = parsed.data.filter((m) => m.isLeader).length;
-      if (leaderCount !== 1) {
-        return NextResponse.json({ error: "Exactly one team leader is required" }, { status: 400 });
-      }
-
       // Transactional member update
       await db.$transaction(async (tx) => {
         if (Object.keys(updateData).length > 0) {
@@ -66,7 +60,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         });
 
         // Upsert members
-        for (const m of parsed.data) {
+        for (const [index, m] of parsed.data.entries()) {
           if (m.id) {
             await tx.participant.update({
               where: { id: m.id },
@@ -76,7 +70,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 phone: m.phone.trim(),
                 college: m.college,
                 degree: m.degree || null,
-                isLeader: m.isLeader,
+                isLeader: index === 0,
               },
             });
           } else {
@@ -88,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 phone: m.phone.trim(),
                 college: m.college,
                 degree: m.degree || null,
-                isLeader: m.isLeader,
+                isLeader: index === 0,
               },
             });
           }

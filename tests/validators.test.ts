@@ -5,38 +5,40 @@
  */
 import { describe, it, expect } from "bun:test";
 import {
+  normalizeRegistrationMembers,
   registrationSchema,
   paymentSubmissionSchema,
   foodCheckInSchema,
   rejectionSchema,
 } from "../src/lib/validators";
 
-function validMember(name: string, email: string, isLeader = false) {
+function validMember(name: string, email: string, isLeader?: boolean) {
   return {
     fullName: name,
     email,
     phone: "9876543210",
     college: "Test College",
-    isLeader,
+    ...(isLeader === undefined ? {} : { isLeader }),
   };
 }
 
-function teamWithLeader(members: ReturnType<typeof validMember>[]) {
-  // Ensure exactly one leader
-  const m = [...members];
-  if (!m.some((x) => x.isLeader) && m.length > 0) m[0] = { ...m[0], isLeader: true };
-  return m;
+function validTeam() {
+  return [
+    validMember("Alice" , "alice@gmail.com"),
+    validMember("Bob", "bob@gmail.com"),
+    validMember("Carol", "carol@gmail.com"),
+  ];
 }
 
 describe("registrationSchema", () => {
   it("accepts a valid 3-member team with one leader", () => {
     const res = registrationSchema.safeParse({
       teamName: "NOVA",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "alice@gmail.com", true),
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(true);
   });
@@ -44,12 +46,12 @@ describe("registrationSchema", () => {
   it("accepts a valid 4-member team with one leader", () => {
     const res = registrationSchema.safeParse({
       teamName: "NOVA",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "alice@gmail.com", true),
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
         validMember("Dan", "dan@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(true);
   });
@@ -57,10 +59,10 @@ describe("registrationSchema", () => {
   it("rejects a 2-member team (minimum 3)", () => {
     const res = registrationSchema.safeParse({
       teamName: "TOOFEW",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "alice@gmail.com", true),
         validMember("Bob", "bob@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
@@ -68,13 +70,13 @@ describe("registrationSchema", () => {
   it("rejects a 5-member team (maximum 4)", () => {
     const res = registrationSchema.safeParse({
       teamName: "TOOMANY",
-      members: teamWithLeader([
+      members: [
         validMember("A", "a@gmail.com", true),
         validMember("B", "b@gmail.com"),
         validMember("C", "c@gmail.com"),
         validMember("D", "d@gmail.com"),
         validMember("E", "e@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
@@ -82,11 +84,11 @@ describe("registrationSchema", () => {
   it("rejects invalid email", () => {
     const res = registrationSchema.safeParse({
       teamName: "BAD",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "not-an-email", true),
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
@@ -94,11 +96,11 @@ describe("registrationSchema", () => {
   it("rejects duplicate emails within team", () => {
     const res = registrationSchema.safeParse({
       teamName: "DUP",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "same@gmail.com", true),
         validMember("Bob", "same@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
@@ -106,11 +108,11 @@ describe("registrationSchema", () => {
   it("rejects short phone", () => {
     const res = registrationSchema.safeParse({
       teamName: "BADPHONE",
-      members: teamWithLeader([
+      members: [
         { ...validMember("Alice", "alice@gmail.com", true), phone: "123" },
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
@@ -123,11 +125,11 @@ describe("registrationSchema", () => {
   ])("accepts a 10-digit Indian mobile beginning with %s", (_prefix, phone) => {
     const res = registrationSchema.safeParse({
       teamName: "VALIDPHONE",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "alice@gmail.com", true),
         { ...validMember("Bob", "bob@gmail.com"), phone },
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(true);
   });
@@ -154,11 +156,11 @@ describe("registrationSchema", () => {
   it("rejects team name with invalid characters", () => {
     const res = registrationSchema.safeParse({
       teamName: "Bad@Team!",
-      members: teamWithLeader([
+      members: [
         validMember("Alice", "alice@gmail.com", true),
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
@@ -166,47 +168,58 @@ describe("registrationSchema", () => {
   it("rejects empty member full name", () => {
     const res = registrationSchema.safeParse({
       teamName: "OK",
-      members: teamWithLeader([
+      members: [
         { ...validMember("", "alice@gmail.com", true) },
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });
 
-  it("rejects team with NO leader", () => {
+  it("ignores client-controlled leader flags", () => {
     const res = registrationSchema.safeParse({
       teamName: "NOLEADER",
       members: [
-        validMember("Alice", "alice@gmail.com"),
-        validMember("Bob", "bob@gmail.com"),
-        validMember("Carol", "carol@gmail.com"),
+        validMember("Alice", "alice@gmail.com", false),
+        validMember("Bob", "bob@gmail.com", true),
+        validMember("Carol", "carol@gmail.com", true),
       ],
     });
-    expect(res.success).toBe(false);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.members[0]).not.toHaveProperty("isLeader");
+      expect(normalizeRegistrationMembers(res.data.members).map((m) => m.isLeader)).toEqual([true, false, false]);
+    }
   });
 
-  it("rejects team with TWO leaders", () => {
+  it("normalizes registration-created teams to one first-member leader", () => {
+    const res = registrationSchema.safeParse({ teamName: "REGISTRATION", members: validTeam() });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(normalizeRegistrationMembers(res.data.members).map((m) => m.isLeader)).toEqual([true, false, false]);
+    }
+  });
+
+  it("normalizes admin-created teams to one first-member leader", () => {
     const res = registrationSchema.safeParse({
-      teamName: "TWOLEADERS",
-      members: [
-        validMember("Alice", "alice@gmail.com", true),
-        validMember("Bob", "bob@gmail.com", true),
-        validMember("Carol", "carol@gmail.com"),
-      ],
+      teamName: "ADMIN",
+      members: validTeam().map((member, index) => ({ ...member, isLeader: index !== 0 })),
     });
-    expect(res.success).toBe(false);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(normalizeRegistrationMembers(res.data.members).map((m) => m.isLeader)).toEqual([true, false, false]);
+    }
   });
 
   it("rejects team with missing college on any member", () => {
     const res = registrationSchema.safeParse({
       teamName: "NOCOLLEGE",
-      members: teamWithLeader([
+      members: [
         { ...validMember("Alice", "alice@gmail.com", true), college: "" },
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
-      ]),
+      ],
     });
     expect(res.success).toBe(false);
   });

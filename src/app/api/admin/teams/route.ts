@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requirePermission, jsonError } from "@/lib/api-auth";
 import { writeAudit } from "@/lib/audit";
 import { recordChange, snapshotRow } from "@/lib/change-history";
-import { registrationSchema } from "@/lib/validators";
+import { normalizeRegistrationMembers, registrationSchema } from "@/lib/validators";
 import {
   generateQrToken,
   generateRegistrationId,
@@ -34,7 +34,7 @@ export async function GET() {
 /**
  * POST /api/admin/teams
  * Manually create a team (super admin). Supports immediate approval.
- * Body: { teamName, college, members: [{fullName, email, phone, college, degree, isLeader}], status: "APPROVED" | "SUBMITTED" }
+ * Body: { teamName, college, members: [{fullName, email, phone, college, degree}], status: "APPROVED" | "SUBMITTED" }
  *
  * Transactional — either the full team + members + payment are created, or nothing.
  */
@@ -50,7 +50,8 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Validation failed", issues: parsed.error.issues }, { status: 400 });
     }
-    const { teamName, college, members } = parsed.data;
+    const { teamName, college } = parsed.data;
+    const members = normalizeRegistrationMembers(parsed.data.members);
     const wantApproved = body.status === "APPROVED";
 
     // Check team name uniqueness

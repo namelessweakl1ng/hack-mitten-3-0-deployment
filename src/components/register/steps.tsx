@@ -230,10 +230,10 @@ export function StepMembers() {
                     <div className="text-xs text-[#D83A43]">• Full name must be at least 2 characters</div>
                   )}
                   {m.email.trim().length > 0 && !m.email.toLowerCase().trim().endsWith("@gmail.com") && (
-                    <div className="text-xs text-[#D83A43]">• Email must be a @gmail.com address</div>
+                    <div className="text-xs text-[#D83A43]">• Enter a valid Email Adress</div>
                   )}
                   {m.phone.trim().length > 0 && !/^[6-9][0-9]{9}$/.test(m.phone.trim()) && (
-                    <div className="text-xs text-[#D83A43]">• Phone must be exactly 10 digits and start with 6, 7, 8, or 9</div>
+                    <div className="text-xs text-[#D83A43]">• Enter a valid Phone Number</div>
                   )}
                   {m.college.trim().length > 0 && m.college.trim().length < 2 && (
                     <div className="text-xs text-[#D83A43]">• College name is required</div>
@@ -617,14 +617,9 @@ function Input({
 const DEGREE_OPTIONS = [
   "B.E",
   "B.Tech",
-  "M.E",
-  "M.Tech",
   "MCA",
-  "M.Sc",
-  "B.Sc",
   "BCA",
   "Diploma",
-  "Ph.D",
   "Other",
 ];
 

@@ -149,35 +149,37 @@ export function StepTeam() {
   );
 }
 
-// ─── STEP 1: MEMBERS (with team leader selection) ─────────────────────────────
+// ─── STEP 1: MEMBERS ──────────────────────────────────────────────────────────
 
 export function StepMembers() {
   const { members, setMember, addMember, removeMember, next, prev } = useRegisterStore();
-  const leaderIdx = members.findIndex((m) => m.isLeader);
 
   const memberValid = (m: typeof members[0]) =>
     m.fullName.trim().length >= 2 &&
     m.email.toLowerCase().trim().endsWith("@gmail.com") &&
-    /^[6-9][0-9]{9}$/.test(m.phone.trim()) &&
+    /^\d{10}$/.test(m.phone.trim()) &&
     m.college.trim().length >= 2;
 
   const allValid = members.every(memberValid);
   const emails = members.map((m) => m.email.toLowerCase().trim());
   const hasDuplicate = emails.some((e, i) => e && emails.indexOf(e) !== i);
-  const hasLeader = leaderIdx >= 0;
-
-  const valid = allValid && !hasDuplicate && hasLeader;
+  const valid = allValid && !hasDuplicate;
 
   return (
     <div className="max-w-2xl mx-auto">
       <h2 className="display text-3xl md:text-5xl font-bold text-white mb-3">ASSEMBLE THE CREW.</h2>
       <p className="text-sm md:text-base text-[#A8A8A8] mb-8 md:mb-10">
-        Minimum 3, maximum 4. Each member must have a unique email. Designate exactly one team leader.
+        Minimum 3, maximum 4. Each member must have a unique email. The first member is always the team leader.
       </p>
 
       <div className="space-y-4 md:space-y-6">
         {members.map((m, i) => {
-          const isLeader = i === leaderIdx;
+          const isLeader = i === 0;
+          const emailError = m.email.trim().length > 0 && !m.email.toLowerCase().trim().endsWith("@gmail.com")
+            ? "• Email must be a @gmail.com address"
+            : hasDuplicate && emails.indexOf(emails[i]) !== i && emails[i]
+              ? "• This email is duplicated within the team"
+              : undefined;
           return (
             <div
               key={i}
@@ -192,11 +194,9 @@ export function StepMembers() {
                   </span>
                   {i < 3 && <span className="text-[#A8A8A8] text-xs">· Required</span>}
                   {i === 3 && <span className="text-[#A8A8A8] text-xs">· Optional</span>}
-                  {isLeader && (
-                    <span className="inline-flex items-center gap-1 mono text-[10px] uppercase tracking-widest text-[#D83A43] border border-[#B52A32] px-2 py-0.5 rounded">
-                      <Crown size={10} /> Leader
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-1 mono text-[10px] uppercase tracking-widest text-[#D83A43] border border-[#B52A32] px-2 py-0.5 rounded">
+                    {isLeader && <Crown size={10} />} {isLeader ? "Team Leader" : "Team Member"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {i >= 3 && (
@@ -211,10 +211,10 @@ export function StepMembers() {
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <Input label="Full Name" value={m.fullName} onChange={(v) => setMember(i, { fullName: v })} placeholder="Enter full name" />
-                <Input label="Email" type="email" value={m.email} onChange={(v) => setMember(i, { email: v })} placeholder="example@gmail.com" />
-                <Input label="Phone" type="tel" value={m.phone} onChange={(v) => setMember(i, { phone: v })} placeholder="10 digit number" />
-                <Input label="College" value={m.college} onChange={(v) => setMember(i, { college: v })} placeholder="Enter your college / institution name" />
+                <Input label="Full Name" value={m.fullName} onChange={(v) => setMember(i, { fullName: v })} placeholder="Enter full name" error={m.fullName.trim().length > 0 && m.fullName.trim().length < 2 ? "• Full name must be at least 2 characters" : undefined} />
+                <Input label="Email" type="email" value={m.email} onChange={(v) => setMember(i, { email: v })} placeholder="example@gmail.com" error={emailError} />
+                <Input label="Phone" type="tel" value={m.phone} onChange={(v) => setMember(i, { phone: v })} placeholder="10 digit number" error={m.phone.trim().length > 0 && !/^\d{10}$/.test(m.phone.trim()) ? "• Phone must be exactly 10 digits (numbers only)" : undefined} />
+                <Input label="College" value={m.college} onChange={(v) => setMember(i, { college: v })} placeholder="Enter your college / institution name" error={m.college.trim().length > 0 && m.college.trim().length < 2 ? "• College name is required" : undefined} />
                 <div className="md:col-span-2">
                   <DegreeField
                     value={m.degree}
@@ -223,43 +223,6 @@ export function StepMembers() {
                 </div>
               </div>
 
-              {/* Per-member validation hints */}
-              {(!memberValid(m) || (hasDuplicate && emails.indexOf(emails[i]) !== i)) && (
-                <div className="mt-3 space-y-1">
-                  {m.fullName.trim().length > 0 && m.fullName.trim().length < 2 && (
-                    <div className="text-xs text-[#D83A43]">• Full name must be at least 2 characters</div>
-                  )}
-                  {m.email.trim().length > 0 && !m.email.toLowerCase().trim().endsWith("@gmail.com") && (
-                    <div className="text-xs text-[#D83A43]">• Enter a valid Email Adress</div>
-                  )}
-                  {m.phone.trim().length > 0 && !/^[6-9][0-9]{9}$/.test(m.phone.trim()) && (
-                    <div className="text-xs text-[#D83A43]">• Enter a valid Phone Number</div>
-                  )}
-                  {m.college.trim().length > 0 && m.college.trim().length < 2 && (
-                    <div className="text-xs text-[#D83A43]">• College name is required</div>
-                  )}
-                  {hasDuplicate && emails.indexOf(emails[i]) !== i && emails[i] && (
-                    <div className="text-xs text-[#D83A43]">• This email is duplicated within the team</div>
-                  )}
-                </div>
-              )}
-              <div className="mt-3 md:mt-4">
-                <button
-                  onClick={() => {
-                    // Toggle leader — set isLeader on this member only, clear others
-                    const newLeader = !isLeader;
-                    members.forEach((_, idx) => setMember(idx, { isLeader: false }));
-                    setMember(i, { isLeader: newLeader });
-                  }}
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-all min-h-[36px] ${
-                    isLeader
-                      ? "bg-[#B52A32] text-white"
-                      : "border border-white/15 text-[#A8A8A8] hover:border-[#B52A32] hover:text-white"
-                  }`}
-                >
-                  <Crown size={12} /> {isLeader ? "Team Leader" : "Mark as Team Leader"}
-                </button>
-              </div>
             </div>
           );
         })}
@@ -272,24 +235,6 @@ export function StepMembers() {
         >
           <Plus size={14} /> Add Optional 4th Member
         </button>
-      )}
-
-      {/* Summary of what's blocking Continue */}
-      {!valid && (members.some(m => m.fullName.trim() || m.email.trim() || m.phone.trim())) && (
-        <div className="mt-4 glass rounded-lg p-4 border-l-2 border-[#B52A32]">
-          <div className="text-xs font-semibold text-[#D83A43] mb-2">Complete these to continue:</div>
-          <div className="space-y-1">
-            {!allValid && (
-              <div className="text-xs text-[#A8A8A8]">• Fill in all member fields correctly (name, @gmail.com email, valid Indian mobile number, college)</div>
-            )}
-            {hasDuplicate && (
-              <div className="text-xs text-[#A8A8A8]">• Each member must have a unique email</div>
-            )}
-            {!hasLeader && (
-              <div className="text-xs text-[#A8A8A8]">• Mark exactly one member as Team Leader</div>
-            )}
-          </div>
-        </div>
       )}
 
       <div className="mt-8 md:mt-10 flex items-center justify-between">
@@ -315,7 +260,6 @@ export function StepMembers() {
 
 export function StepDetails() {
   const { teamName, members, next, prev } = useRegisterStore();
-  const leaderIdx = members.findIndex((m) => m.isLeader);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -332,18 +276,18 @@ export function StepDetails() {
 
         <div className="mt-4 md:mt-6 space-y-3 md:space-y-4">
           {members.map((m, i) => (
-            <div key={i} className={`flex items-start gap-3 md:gap-4 pb-3 md:pb-4 border-b border-white/5 last:border-0 last:pb-0 ${i === leaderIdx ? "" : ""}`}>
+            <div key={i} className="flex items-start gap-3 md:gap-4 pb-3 md:pb-4 border-b border-white/5 last:border-0 last:pb-0">
               <div className={`flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full mono text-xs ${
-                i === leaderIdx
+                i === 0
                   ? "bg-[#B52A32] text-white"
                   : "bg-[#151515] border border-white/10 text-[#B52A32]"
               }`}>
-                {i === leaderIdx ? <Crown size={14} /> : String(i + 1).padStart(2, "0")}
+                {i === 0 ? <Crown size={14} /> : String(i + 1).padStart(2, "0")}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-white font-medium text-sm md:text-base truncate">
                   {m.fullName}
-                  {i === leaderIdx && <span className="ml-2 text-[10px] text-[#D83A43]">· LEADER</span>}
+                  <span className="ml-2 text-[10px] text-[#D83A43]">· {i === 0 ? "TEAM LEADER" : "TEAM MEMBER"}</span>
                 </div>
                 <div className="text-xs md:text-sm text-[#A8A8A8] truncate">{m.email}</div>
                 <div className="text-xs text-[#A8A8A8] mt-0.5 truncate">{m.phone} · {m.college}</div>
@@ -396,12 +340,17 @@ export function StepPayment() {
 
   const validTxn = transactionId.trim().length >= 4 && transactionId.trim().length <= 100;
   const valid = validTxn && screenshot !== null;
+  const transactionError = transactionId.trim().length > 0 && !validTxn
+    ? transactionId.trim().length < 4
+      ? "• Transaction ID must be at least 4 characters"
+      : "• Transaction ID must be 100 characters or fewer"
+    : undefined;
 
   const submitAll = async () => {
     setServerError(null);
     setSubmitting(true);
     try {
-      // 1. Create the team (server validates team leader + college required)
+      // 1. Create the team (the server derives the first member as leader)
       const regRes = await fetch("/api/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -491,6 +440,7 @@ export function StepPayment() {
           placeholder="Enter your UPI transaction ID"
           className="mt-2 w-full bg-transparent border-b border-white/15 py-3 text-base md:text-lg text-white placeholder:text-[#A8A8A8]/40 focus:border-[#B52A32] focus:outline-none transition-colors"
         />
+        {transactionError && <div className="mt-1 text-xs text-[#D83A43]">{transactionError}</div>}
       </label>
 
       <label className="block">
@@ -594,9 +544,9 @@ export function StepSubmit() {
 // ─── SHARED INPUT ─────────────────────────────────────────────────────────────
 
 function Input({
-  label, value, onChange, placeholder, type = "text",
+  label, value, onChange, placeholder, type = "text", error,
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; error?: string;
 }) {
   return (
     <label className="block">
@@ -608,6 +558,7 @@ function Input({
         placeholder={placeholder}
         className="mt-1 w-full bg-transparent border-b border-white/15 py-2 text-base text-white placeholder:text-[#A8A8A8]/40 focus:border-[#B52A32] focus:outline-none transition-colors"
       />
+      {error && <div className="mt-1 text-xs text-[#D83A43]">{error}</div>}
     </label>
   );
 }
@@ -617,9 +568,14 @@ function Input({
 const DEGREE_OPTIONS = [
   "B.E",
   "B.Tech",
+  "M.E",
+  "M.Tech",
   "MCA",
+  "M.Sc",
+  "B.Sc",
   "BCA",
   "Diploma",
+  "Ph.D",
   "Other",
 ];
 

@@ -6,26 +6,23 @@
 import { describe, it, expect } from "bun:test";
 import {
   registrationSchema,
+  normalizeRegistrationMembers,
   paymentSubmissionSchema,
   foodCheckInSchema,
   rejectionSchema,
 } from "../src/lib/validators";
 
-function validMember(name: string, email: string, isLeader = false) {
+function validMember(name: string, email: string, _isLeader = false) {
   return {
     fullName: name,
     email,
     phone: "9876543210",
     college: "Test College",
-    isLeader,
   };
 }
 
 function teamWithLeader(members: ReturnType<typeof validMember>[]) {
-  // Ensure exactly one leader
-  const m = [...members];
-  if (!m.some((x) => x.isLeader) && m.length > 0) m[0] = { ...m[0], isLeader: true };
-  return m;
+  return members;
 }
 
 describe("registrationSchema", () => {
@@ -175,7 +172,7 @@ describe("registrationSchema", () => {
     expect(res.success).toBe(false);
   });
 
-  it("rejects team with NO leader", () => {
+  it("ignores a client-controlled leader flag", () => {
     const res = registrationSchema.safeParse({
       teamName: "NOLEADER",
       members: [
@@ -184,10 +181,10 @@ describe("registrationSchema", () => {
         validMember("Carol", "carol@gmail.com"),
       ],
     });
-    expect(res.success).toBe(false);
+    expect(res.success).toBe(true);
   });
 
-  it("rejects team with TWO leaders", () => {
+  it("normalizes the first member as the only leader", () => {
     const res = registrationSchema.safeParse({
       teamName: "TWOLEADERS",
       members: [
@@ -196,7 +193,11 @@ describe("registrationSchema", () => {
         validMember("Carol", "carol@gmail.com"),
       ],
     });
-    expect(res.success).toBe(false);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      const members = normalizeRegistrationMembers(res.data.members);
+      expect(members.map((member) => member.isLeader)).toEqual([true, false, false]);
+    }
   });
 
   it("rejects team with missing college on any member", () => {

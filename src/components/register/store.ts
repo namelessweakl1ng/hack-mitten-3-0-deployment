@@ -8,7 +8,6 @@ export interface MemberForm {
   phone: string;
   college: string;
   degree: string;
-  isLeader: boolean;
 }
 
 interface RegisterState {
@@ -49,7 +48,7 @@ interface RegisterState {
   reset: () => void;
 }
 
-const emptyMember = (): MemberForm => ({ fullName: "", email: "", phone: "", college: "", degree: "", isLeader: false });
+const emptyMember = (): MemberForm => ({ fullName: "", email: "", phone: "", college: "", degree: "" });
 
 export const useRegisterStore = create<RegisterState>((set) => ({
   step: 0,

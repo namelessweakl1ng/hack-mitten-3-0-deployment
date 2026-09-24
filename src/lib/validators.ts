@@ -11,7 +11,6 @@ export const memberSchema = z.object({
     .regex(/^[6-9][0-9]{9}$/, "Phone must be a valid 10-digit Indian mobile number"),
   college: z.string().min(2, "College name required").max(150),
   degree: z.string().max(60).optional().or(z.literal("")),
-  isLeader: z.boolean().default(false),
 });
 
 export const registrationSchema = z
@@ -25,21 +24,6 @@ export const registrationSchema = z
     members: z.array(memberSchema).min(3, "Minimum 3 members required").max(4, "Maximum 4 members allowed"),
   })
   .superRefine((data, ctx) => {
-    // Exactly ONE team leader
-    const leaderCount = data.members.filter((m) => m.isLeader).length;
-    if (leaderCount === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["members"],
-        message: "Exactly one team leader is required",
-      });
-    } else if (leaderCount > 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["members"],
-        message: "Only one team leader is allowed",
-      });
-    }
     // Prevent duplicate member emails within the team
     const emails = data.members.map((m) => m.email.toLowerCase().trim());
     const seen = new Set<string>();
@@ -54,6 +38,13 @@ export const registrationSchema = z
       seen.add(email);
     });
   });
+
+export function normalizeRegistrationMembers(members: MemberInput[]) {
+  return members.map((member, index) => ({
+    ...member,
+    isLeader: index === 0,
+  }));
+}
 
 export const paymentSubmissionSchema = z.object({
   transactionId: z

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { registrationSchema } from "@/lib/validators";
+import { normalizeRegistrationMembers, registrationSchema } from "@/lib/validators";
 import { jsonError } from "@/lib/api-auth";
 import { getEventState } from "@/lib/event-state";
 import { normalizeTeamName } from "@/lib/team-name";
@@ -25,7 +25,7 @@ async function findTeamWithNormalizedName(client: RawQueryClient, normalizedName
  *   - registrationsOpen toggle (EventConfig) — if false, returns 403
  *   - Registration capacity (EventConfig) — if at capacity, returns 403
  *   - 3-4 members
- *   - Exactly one team leader
+ *   - First member is the sole team leader
  *   - College name required on every member
  *   - No duplicate member emails within the team
  *   - Unique team name (DB constraint)
@@ -65,7 +65,8 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    const { teamName, college, members } = parsed.data;
+    const { teamName, college } = parsed.data;
+    const members = normalizeRegistrationMembers(parsed.data.members);
 
     const normalizedTeamName = normalizeTeamName(teamName);
     if (normalizedTeamName.length < 2) {

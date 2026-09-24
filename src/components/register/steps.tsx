@@ -157,7 +157,7 @@ export function StepMembers() {
   const memberValid = (m: typeof members[0]) =>
     m.fullName.trim().length >= 2 &&
     m.email.toLowerCase().trim().endsWith("@gmail.com") &&
-    /^\d{10}$/.test(m.phone.trim()) &&
+    /^[6-9][0-9]{9}$/.test(m.phone.trim()) &&
     m.college.trim().length >= 2;
 
   const allValid = members.every(memberValid);
@@ -176,7 +176,7 @@ export function StepMembers() {
         {members.map((m, i) => {
           const isLeader = i === 0;
           const emailError = m.email.trim().length > 0 && !m.email.toLowerCase().trim().endsWith("@gmail.com")
-            ? "• Email must be a @gmail.com address"
+            ? "• Enter a valid Gmail address"
             : hasDuplicate && emails.indexOf(emails[i]) !== i && emails[i]
               ? "• This email is duplicated within the team"
               : undefined;
@@ -213,7 +213,7 @@ export function StepMembers() {
               <div className="grid gap-3 md:grid-cols-2">
                 <Input label="Full Name" value={m.fullName} onChange={(v) => setMember(i, { fullName: v })} placeholder="Enter full name" error={m.fullName.trim().length > 0 && m.fullName.trim().length < 2 ? "• Full name must be at least 2 characters" : undefined} />
                 <Input label="Email" type="email" value={m.email} onChange={(v) => setMember(i, { email: v })} placeholder="example@gmail.com" error={emailError} />
-                <Input label="Phone" type="tel" value={m.phone} onChange={(v) => setMember(i, { phone: v })} placeholder="10 digit number" error={m.phone.trim().length > 0 && !/^\d{10}$/.test(m.phone.trim()) ? "• Phone must be exactly 10 digits (numbers only)" : undefined} />
+                <Input label="Phone" type="tel" value={m.phone} onChange={(v) => setMember(i, { phone: v })} placeholder="10 digit number" error={m.phone.trim().length > 0 && !/^[6-9][0-9]{9}$/.test(m.phone.trim()) ? "• Enter a valid Indian mobile number" : undefined} />
                 <Input label="College" value={m.college} onChange={(v) => setMember(i, { college: v })} placeholder="Enter your college / institution name" error={m.college.trim().length > 0 && m.college.trim().length < 2 ? "• College name is required" : undefined} />
                 <div className="md:col-span-2">
                   <DegreeField
@@ -568,14 +568,9 @@ function Input({
 const DEGREE_OPTIONS = [
   "B.E",
   "B.Tech",
-  "M.E",
-  "M.Tech",
   "MCA",
-  "M.Sc",
-  "B.Sc",
   "BCA",
   "Diploma",
-  "Ph.D",
   "Other",
 ];
 

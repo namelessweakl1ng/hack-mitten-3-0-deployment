@@ -52,11 +52,7 @@ export function Hero() {
         <div className="hero-reveal hero-reveal-delay-1 mb-6 flex items-center gap-3 flex-wrap justify-center">
           <span className="h-px w-8 md:w-10 bg-[#B52A32]" />
           <span className="mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#A8A8A8] text-center">
-<<<<<<< HEAD
             {cfg?.eventDurationHours ?? 24} Hours 
-=======
-            {cfg?.eventDurationHours ?? 24} Hours · Real Problems
->>>>>>> origin/main
           </span>
           <span className="h-px w-8 md:w-10 bg-[#B52A32]" />
         </div>

@@ -160,6 +160,7 @@ model Team {
   registrationId String?            @unique
   status         RegistrationStatus @default(DRAFT)
   college        String?
+  registrationAcknowledgementAttemptedAt DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 

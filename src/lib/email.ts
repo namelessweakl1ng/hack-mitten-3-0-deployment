@@ -23,6 +23,16 @@ export interface EmailResult {
   provider: "resend" | "console" | "configuration";
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;",
+  })[character] ?? character);
+}
+
 /**
  * Send an email. Production requires both Resend and a configured sender.
  */
@@ -80,6 +90,106 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   console.log("  Text:", payload.text.slice(0, 200));
   console.log("");
   return { success: true, message: "Email logged (dev mode — no RESEND_API_KEY configured)", provider: "console" };
+}
+
+export function registrationAcknowledgementEmailHtml(opts: {
+  leaderName: string;
+  teamName: string;
+  contactEmail?: string | null;
+}): string {
+  const leaderName = escapeHtml(opts.leaderName);
+  const teamName = escapeHtml(opts.teamName);
+  const contactEmail = opts.contactEmail ? escapeHtml(opts.contactEmail) : null;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#030303;font-family:'Inter',Arial,sans-serif;color:#F2F2F2;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#030303;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#080808;border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:40px 40px 20px;text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#B52A32;">HACKMITTEN 3.0</div>
+              <h1 style="font-size:32px;font-weight:700;color:#F2F2F2;margin:16px 0 8px;">REGISTRATION RECEIVED</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;color:#A8A8A8;font-size:14px;line-height:1.7;">
+              <p style="margin:0 0 20px;color:#F2F2F2;">Hello ${leaderName},</p>
+              <p style="margin:0 0 20px;">Your team registration for Hackmitten 3.0 has been successfully received.</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#151515;border-radius:8px;margin-bottom:20px;">
+                <tr><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#A8A8A8;">TEAM</td><td style="padding:16px 20px;font-size:16px;color:#F2F2F2;font-weight:600;text-align:right;">${teamName}</td></tr>
+                <tr><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#A8A8A8;border-top:1px solid rgba(255,255,255,0.05);">REGISTRATION STATUS</td><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:16px;color:#B52A32;font-weight:600;text-align:right;border-top:1px solid rgba(255,255,255,0.05);">RECEIVED</td></tr>
+              </table>
+              <p style="margin:0 0 12px;">Your registration and payment details will be reviewed by the Hackmitten coordinators.</p>
+              <p style="margin:0 0 8px;color:#F2F2F2;font-weight:600;">Please note:</p>
+              <ul style="margin:0 0 20px;padding-left:20px;">
+                <li>This email confirms that your registration has been received.</li>
+                <li>It does NOT mean that your payment has been verified.</li>
+                <li>It does NOT mean that your team has been approved.</li>
+                <li>The coordinators will contact you regarding the next step after verification.</li>
+              </ul>
+              <p style="margin:0;">Keep this email for your records.</p>
+              ${contactEmail ? `<p style="margin:20px 0 0;">Official contact: <a href="mailto:${contactEmail}" style="color:#F2F2F2;">${contactEmail}</a></p>` : ""}
+            </td>
+          </tr>
+        </table>
+        <p style="font-size:11px;color:#A8A8A8;margin:24px 0 0;opacity:0.6;">© 2026 Hackmitten · Black is the universe · White is information · Red is energy</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+export function registrationAcknowledgementEmailText(opts: {
+  leaderName: string;
+  teamName: string;
+  contactEmail?: string | null;
+}): string {
+  return `HACKMITTEN 3.0
+
+REGISTRATION RECEIVED
+
+Hello ${opts.leaderName},
+
+Your team registration for Hackmitten 3.0 has been successfully received.
+
+Team: ${opts.teamName}
+Registration status: RECEIVED
+
+Your registration and payment details will be reviewed by the Hackmitten coordinators.
+
+Please note:
+- This email confirms that your registration has been received.
+- It does NOT mean that your payment has been verified.
+- It does NOT mean that your team has been approved.
+- The coordinators will contact you regarding the next step after verification.
+
+Keep this email for your records.${opts.contactEmail ? `
+
+Official contact: ${opts.contactEmail}` : ""}`.trim();
+}
+
+export async function sendRegistrationAcknowledgementEmail(opts: {
+  to: string;
+  leaderName: string;
+  teamName: string;
+  contactEmail?: string | null;
+}): Promise<EmailResult> {
+  return sendEmail({
+    to: opts.to,
+    subject: "Hackmitten 3.0 — Registration Received",
+    html: registrationAcknowledgementEmailHtml(opts),
+    text: registrationAcknowledgementEmailText(opts),
+  });
 }
 
 /**

@@ -21,6 +21,7 @@ interface RegisterState {
 
   // After POST /api/registrations
   teamId: string | null;
+  acknowledgementEmailSent: boolean | null;
   // After POST /api/registrations/:id/payment
   paymentId: string | null;
   // After upload — screenshot path on server
@@ -41,6 +42,7 @@ interface RegisterState {
   setTransactionId: (s: string) => void;
   setScreenshot: (f: File | null) => void;
   setTeamId: (id: string | null) => void;
+  setAcknowledgementEmailSent: (sent: boolean | null) => void;
   setPaymentId: (id: string | null) => void;
   setScreenshotPath: (p: string | null) => void;
   setServerError: (e: string | null) => void;
@@ -59,6 +61,7 @@ export const useRegisterStore = create<RegisterState>((set) => ({
   screenshot: null,
   screenshotPreview: null,
   teamId: null,
+  acknowledgementEmailSent: null,
   paymentId: null,
   screenshotPath: null,
   serverError: null,
@@ -93,6 +96,7 @@ export const useRegisterStore = create<RegisterState>((set) => ({
       };
     }),
   setTeamId: (id) => set({ teamId: id }),
+  setAcknowledgementEmailSent: (sent) => set({ acknowledgementEmailSent: sent }),
   setPaymentId: (id) => set({ paymentId: id }),
   setScreenshotPath: (p) => set({ screenshotPath: p }),
   setServerError: (e) => set({ serverError: e }),
@@ -111,6 +115,7 @@ export const useRegisterStore = create<RegisterState>((set) => ({
         screenshot: null,
         screenshotPreview: null,
         teamId: null,
+        acknowledgementEmailSent: null,
         paymentId: null,
         screenshotPath: null,
         serverError: null,

@@ -21,7 +21,6 @@ export const HACKMITTEN_EVENT = {
   websiteTeam: [
     "Manjunatha P",
     "Sharath H N",
-    "Manju C G",
-    "Sonu G",
+    "Pradeep Kadakol",
   ],
 } as const;

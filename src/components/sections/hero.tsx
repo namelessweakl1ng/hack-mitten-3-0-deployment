@@ -49,7 +49,13 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#030303] pointer-events-none" />
 
       <div className="hero-content-depth relative z-10 flex flex-col items-center w-full max-w-4xl">
-        
+        <div className="hero-reveal hero-reveal-delay-1 mb-6 flex items-center gap-3 flex-wrap justify-center">
+          <span className="h-px w-8 md:w-10 bg-[#B52A32]" />
+          <span className="mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#A8A8A8] text-center">
+            {cfg?.eventDurationHours ?? 24} Hours · Real Problems
+          </span>
+          <span className="h-px w-8 md:w-10 bg-[#B52A32]" />
+        </div>
 
         <h1 className="hero-title hero-reveal hero-reveal-delay-2 display text-[16vw] sm:text-[14vw] leading-[0.85] font-bold tracking-tight text-white md:text-[12vw] lg:text-[10rem]">
           <span className="block">{heading}</span>

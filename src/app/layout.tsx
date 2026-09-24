@@ -28,7 +28,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Hackmitten 3.0 — Ideas Beyond the Horizon",
   description:
-    "24 hours. Limitless possibilities. Enter the event horizon at Hackmitten 3.0.",
+    "24 hours. Real problems. Limitless possibilities. Enter the event horizon at Hackmitten 3.0.",
   keywords: ["hackathon", "hackmitten", "innovation", "code", "build break rebuild"],
   openGraph: {
     title: "Hackmitten 3.0",

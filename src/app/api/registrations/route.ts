@@ -4,6 +4,8 @@ import { normalizeRegistrationMembers, registrationSchema } from "@/lib/validato
 import { jsonError } from "@/lib/api-auth";
 import { getEventState } from "@/lib/event-state";
 import { normalizeTeamName } from "@/lib/team-name";
+import { sendRegistrationAcknowledgementEmail, type EmailResult } from "@/lib/email";
+import { claimRegistrationAcknowledgement } from "@/lib/registration-acknowledgement";
 
 type RawQueryClient = Pick<typeof db, "$queryRaw">;
 
@@ -128,7 +130,53 @@ export async function POST(req: Request) {
       });
     });
 
-    return NextResponse.json({ team }, { status: 201 });
+    let emailResult: EmailResult = {
+      success: false,
+      message: "Registration acknowledgement was not attempted",
+      provider: "configuration",
+    };
+
+    // Claim the one acknowledgement attempt after the registration transaction commits.
+    // The claim prevents duplicate sends from concurrent or retried requests.
+    const acknowledgementClaimed = await claimRegistrationAcknowledgement(db, team.id);
+
+    if (acknowledgementClaimed) {
+      try {
+        const leader = team.members.find((member) => member.isLeader);
+        const config = await db.eventConfig.findUnique({ where: { id: "singleton" } });
+        if (!leader?.email) {
+          emailResult = {
+            success: false,
+            message: "Leader email is missing",
+            provider: "configuration",
+          };
+        } else {
+          emailResult = await sendRegistrationAcknowledgementEmail({
+            to: leader.email,
+            leaderName: leader.fullName,
+            teamName: team.teamName,
+            contactEmail: config?.contactEmail,
+          });
+        }
+        if (!emailResult.success) {
+          console.error("[registration-acknowledgement] delivery failed", {
+            teamId: team.id,
+            provider: emailResult.provider,
+            message: emailResult.message,
+          });
+        }
+      } catch (err) {
+        console.error("[registration-acknowledgement] delivery failed", {
+          teamId: team.id,
+          provider: "configuration",
+          message: err instanceof Error ? err.message : "unknown error",
+        });
+      }
+    } else {
+      console.log("[registration-acknowledgement] duplicate suppressed", { teamId: team.id });
+    }
+
+    return NextResponse.json({ team, acknowledgementEmailSent: emailResult.success }, { status: 201 });
   } catch (err) {
     if (err instanceof Error && err.message === "TEAM_NAME_TAKEN") {
       return NextResponse.json(

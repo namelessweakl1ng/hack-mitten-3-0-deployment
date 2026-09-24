@@ -326,6 +326,7 @@ export function StepPayment() {
     screenshot, screenshotPreview, setScreenshot,
     next, prev, serverError, submitting,
     setTeamId, setPaymentId, setScreenshotPath,
+    setAcknowledgementEmailSent,
     teamName, college, members,
     setServerError, setSubmitting,
   } = useRegisterStore();
@@ -360,6 +361,7 @@ export function StepPayment() {
       if (!regRes.ok) throw new Error(regJson.error || "Registration failed");
       const newTeamId = regJson.team.id;
       setTeamId(newTeamId);
+      setAcknowledgementEmailSent(regJson.acknowledgementEmailSent === true);
 
       // 2. Submit payment (transaction ID)
       const payRes = await fetch(`/api/registrations/${newTeamId}/payment`, {
@@ -499,7 +501,7 @@ export function StepPayment() {
 // ─── STEP 4: SUBMIT / CONFIRMATION ────────────────────────────────────────────
 
 export function StepSubmit() {
-  const { teamId, teamName, reset } = useRegisterStore();
+  const { teamId, teamName, acknowledgementEmailSent, reset } = useRegisterStore();
 
   return (
     <div className="max-w-2xl mx-auto text-center">
@@ -512,6 +514,15 @@ export function StepSubmit() {
       <p className="text-sm md:text-base text-[#A8A8A8] mb-2">
         Your registration for <span className="text-white">{teamName}</span> has been received.
       </p>
+      {acknowledgementEmailSent ? (
+        <p className="text-sm md:text-base text-[#A8A8A8] mb-2">
+          A confirmation email has been sent to the team leader&apos;s email address.
+        </p>
+      ) : (
+        <p className="text-sm md:text-base text-[#A8A8A8] mb-2">
+          Your registration has been recorded. We were unable to send the confirmation email right now. Please keep your registration details.
+        </p>
+      )}
       <p className="text-sm md:text-base text-[#A8A8A8] mb-10">
         The super admin will verify your payment shortly. Once approved, you will receive a unique registration ID and your crew will be issued digital passes with QR credentials for the food check-in system.
       </p>

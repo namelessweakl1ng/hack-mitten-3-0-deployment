@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { approvalEmailHtml, approvalEmailText, sendEmail } from "@/lib/email";
+import { claimRegistrationAcknowledgement } from "@/lib/registration-acknowledgement";
+import {
+  approvalEmailHtml,
+  approvalEmailText,
+  registrationAcknowledgementEmailHtml,
+  registrationAcknowledgementEmailText,
+  sendEmail,
+  sendRegistrationAcknowledgementEmail,
+} from "@/lib/email";
 
 const originalEnv = { ...process.env };
 
@@ -102,5 +110,75 @@ describe("approval email templates", () => {
   it("targets the team leader email in the approval payload", () => {
     expect(approvalEmailText(opts)).toContain("Leader");
     expect(payload.to).toBe("leader@example.com");
+  });
+});
+
+describe("registration acknowledgement email", () => {
+  const opts = {
+    to: "leader@gmail.com",
+    leaderName: "Leader",
+    teamName: "Nova",
+    contactEmail: "hodcse@mitt.edu.in",
+  };
+
+  it("uses the received subject and sends only to the team leader", async () => {
+    process.env.NODE_ENV = "production";
+    process.env.RESEND_API_KEY = "re_test_key";
+    process.env.EMAIL_FROM = "Hackmitten <noreply@example.com>";
+    let requestBody = "";
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (_input, init) => {
+      requestBody = String(init?.body ?? "");
+      return new Response(JSON.stringify({ id: "email_registration_1" }), { status: 200 });
+    };
+
+    try {
+      await expect(sendRegistrationAcknowledgementEmail(opts)).resolves.toMatchObject({
+        success: true,
+        provider: "resend",
+      });
+      expect(requestBody).toContain('"to":["leader@gmail.com"]');
+      expect(requestBody).toContain("Hackmitten 3.0 — Registration Received");
+      expect(requestBody).not.toContain("Team Approved");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("contains received status and coordinator review wording without approval claims", () => {
+    const html = registrationAcknowledgementEmailHtml(opts);
+    const text = registrationAcknowledgementEmailText(opts);
+    for (const content of [html, text]) {
+      expect(content).toContain("REGISTRATION RECEIVED");
+      expect(content).toContain("RECEIVED");
+      expect(content).toContain("payment has been verified");
+      expect(content).toContain("team has been approved");
+      expect(content).toContain(opts.contactEmail);
+      expect(content).not.toContain("TEAM APPROVED.");
+    }
+  });
+
+  it("keeps registration acknowledgement failure non-fatal", async () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.RESEND_API_KEY;
+    process.env.EMAIL_FROM = "Hackmitten <noreply@example.com>";
+
+    await expect(sendRegistrationAcknowledgementEmail(opts)).resolves.toMatchObject({
+      success: false,
+      provider: "configuration",
+    });
+  });
+
+  it("claims an acknowledgement only once across retries", async () => {
+    let attempts = 0;
+    const client = {
+      team: {
+        updateMany: async () => ({ count: attempts++ === 0 ? 1 : 0 }),
+      },
+    };
+
+    await expect(claimRegistrationAcknowledgement(client, "team-1")).resolves.toBe(true);
+    await expect(claimRegistrationAcknowledgement(client, "team-1")).resolves.toBe(false);
+    expect(attempts).toBe(2);
   });
 });

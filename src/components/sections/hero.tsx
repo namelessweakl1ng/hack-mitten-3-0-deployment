@@ -37,7 +37,7 @@ export function Hero() {
   const edition = cfg?.heroEdition || "3.0";
   const subtitle = cfg?.heroSubtitle || "IDEAS BEYOND THE HORIZON";
   const subtitleLines = subtitle.split("|").map((s) => s.trim()).filter(Boolean);
-  const description = cfg?.heroDescription || `${cfg?.eventDurationHours ?? 24} hours. Limitless possibilities.`;
+  const description = "24 HOURS. BUILD. INNOVATE. CREATE.";
   const ctaText = cfg?.heroCtaText || "REGISTER NOW";
   const ctaLink = cfg?.heroCtaLink || "/register";
 

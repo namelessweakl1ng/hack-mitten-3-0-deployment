@@ -61,7 +61,7 @@ export const COORDINATORS: StaticCoordinator[] = [
     role: "Joint Secretary",
     department: "CSE",
     type: "STUDENT",
-    image: "/images/coordinators/bindubs.jpeg",
+    image: "/images/coordinators/bindu.jpeg",
     email: "bindu.bs807@gmail.com",
     phone: "8073709238",
   },

@@ -95,8 +95,8 @@ async function main() {
       winnersHeading: "THE MISSION IS COMPLETE.",
       winnersSubheading: "MEET THE WINNERS.",
       socialLinks: JSON.stringify({
-        instagram: "https://instagram.com/hackmitten",
-        linkedin: "https://linkedin.com/company/hackmitten",
+        instagram: "https://www.instagram.com/mitt_cse_clusteroids?stkn=MWY2ZGUwZWM3d2Vzbg==",
+        linkedin: "https://www.linkedin.com/in/mit-t-60a058291?utm_source=share_via&utm_content=profile&utm_medium=member_android",
       }),
     },
     create: { id: "singleton" },

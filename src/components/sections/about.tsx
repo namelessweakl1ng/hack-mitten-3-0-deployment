@@ -70,7 +70,7 @@ export function About() {
 
         <div className="md:col-span-7 md:pl-8 flex flex-col justify-end">
           <p className="text-base md:text-xl text-white/80 leading-relaxed">
-            {cfg?.aboutDescription || "Hackmitten is a 24-hour descent into the unknown — a place where ideas cross the event horizon and emerge as something built, broken, and rebuilt into existence."}
+            {cfg?.aboutDescription || "Hackmitten is a 24-hour descent into the unknown, where ideas cross the event horizon and emerge as something built, broken, and rebuilt into existence."}
           </p>
           <p className="mt-4 text-sm md:text-base text-[#A8A8A8] leading-relaxed">
             Focused on industry problem statements, the hackathon brings together innovators and developers to collaborate, build practical solutions, and solve real-world challenges through technology and innovation.

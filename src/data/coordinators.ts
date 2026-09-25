@@ -138,7 +138,7 @@ export const COORDINATORS: StaticCoordinator[] = [
     department: "CSE",
     qualification: "MCA",
     type: "FACULTY",
-    image: "/images/faculty_coordinators/karthik.png",
+    image: "/images/faculty_coordinators/karthik.jpeg",
     email: null,
     phone: null,
   },

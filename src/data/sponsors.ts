@@ -3,6 +3,7 @@ export type StaticSponsor = {
   logo: string;
   website: string | null;
   tier: string;
+  customTier?: string | null;
 };
 
 export const SPONSORS: StaticSponsor[] = [
@@ -30,24 +31,39 @@ export const SPONSORS: StaticSponsor[] = [
     website: null,
     tier: "TITLE",
   },
-   {
-  name: "CSE",
-  logo: "/images/sponsors/cse.png",
-  website: null,
-  tier: "CUSTOM",
-  customTier: "Departments",
-},
 
-{
-  name: "AI&ML",
-  logo: "/images/sponsors/aiml.png",
-  website: null,
-  tier: "CUSTOM",
-  customTier: "Departments",
-},
+  // CSE
+  {
+    name: "CSE",
+    logo: "/images/sponsors/cse.png",
+    website: null,
+    tier: "CUSTOM",
+    customTier: "Departments",
+  },
+
+  // AI&ML
+  {
+    name: "AI&ML",
+    logo: "/images/sponsors/aiml.png",
+    website: null,
+    tier: "CUSTOM",
+    customTier: "Departments",
+  },
 ];
 
-export function resolveSponsors(databaseSponsors?: Array<{ id?: string; name?: string | null; logoUrl?: string | null; websiteUrl?: string | null; tier?: string | null }> | null) {
+export function resolveSponsors(
+  databaseSponsors?: Array<{
+    id?: string;
+    name?: string | null;
+    logoUrl?: string | null;
+    websiteUrl?: string | null;
+    tier?: string | null;
+    customTier?: string | null;
+  }> | null
+) {
+  /*
+   * Use database sponsors when available.
+   */
   if (databaseSponsors && databaseSponsors.length > 0) {
     return databaseSponsors.map((s, index) => ({
       id: s.id ?? `sponsor-${index}`,
@@ -55,18 +71,21 @@ export function resolveSponsors(databaseSponsors?: Array<{ id?: string; name?: s
       logoUrl: s.logoUrl ?? "",
       websiteUrl: s.websiteUrl ?? null,
       tier: s.tier ?? "PARTNER",
-      customTier: null,
+      customTier: s.customTier ?? null,
       sortOrder: index,
     }));
   }
 
+  /*
+   * Otherwise use static sponsors.
+   */
   return SPONSORS.map((s, index) => ({
     id: `static-sponsor-${index}`,
     name: s.name,
     logoUrl: s.logo,
     websiteUrl: s.website,
     tier: s.tier,
-    customTier: null,
+    customTier: s.customTier ?? null,
     sortOrder: index,
   }));
 }

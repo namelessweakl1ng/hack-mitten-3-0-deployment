@@ -20,80 +20,69 @@ type Sponsor = {
   sortOrder: number;
 };
 
-const TIER_LABEL: Record<string, string> = {
-  TITLE: "Sponsors",
-  PLATINUM: "Platinum",
-  GOLD: "Gold",
-  SILVER: "Silver",
-  PARTNER: "Partner",
-  SUPPORTER: "Supporters",
-  CUSTOM: "Departments",
-};
-
 export function Sponsors() {
   const { data, error } = useQuery<{ sponsors: Sponsor[] }>({
     queryKey: ["sponsors"],
     queryFn: async () => {
-      const r = await fetch("/api/sponsors");
+      const response = await fetch("/api/sponsors");
 
-      if (!r.ok) {
+      if (!response.ok) {
         throw new Error("Failed to load sponsors");
       }
 
-      return r.json();
+      return response.json();
     },
   });
 
-  const sponsors: Sponsor[] = resolveSponsors(
+  const sponsors = resolveSponsors(
     error ? null : data?.sponsors ?? undefined
   ) as Sponsor[];
 
-  if (sponsors.length === 0) return null;
+  if (sponsors.length === 0) {
+    return null;
+  }
 
-  /*
-   * Separate sponsors from department logos.
-   *
-   * All normal sponsors go into one row.
-   * CSE + AI&ML go into the department row below.
-   */
+  // CSE and AI&ML department logos
   const departmentLogos = sponsors.filter(
-    (s) => s.tier === "CUSTOM"
+    (sponsor) => sponsor.tier === "CUSTOM"
   );
 
-  const normalSponsors = sponsors.filter(
-    (s) => s.tier !== "CUSTOM"
+  // All actual sponsors
+  const sponsorLogos = sponsors.filter(
+    (sponsor) => sponsor.tier !== "CUSTOM"
   );
 
   return (
     <section
       id="sponsors"
-      className="relative py-16 md:py-24 border-t border-white/5"
+      className="relative border-t border-white/5 py-16 md:py-24"
     >
       <div className="mx-auto max-w-7xl px-5 md:px-10">
 
         {/* ================= HEADER ================= */}
-        <div className="mb-10 md:mb-16 text-center">
-          <div className="mono text-xs uppercase tracking-[0.3em] text-[#B52A32] mb-4">
+
+        <div className="mb-10 text-center md:mb-16">
+          <div className="mono mb-4 text-xs uppercase tracking-[0.3em] text-[#B52A32]">
             / Partners
           </div>
 
-          <h2 className="display text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight text-white leading-[0.95]">
+          <h2 className="display text-3xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl md:text-7xl">
             BACKED BY
             <br />
             <span className="text-[#A8A8A8]">THE BEST.</span>
           </h2>
         </div>
 
-        {/* ===================================================== */}
-        {/*                    NORMAL SPONSORS                     */}
-        {/* ===================================================== */}
+        {/* ================================================== */}
+        {/*                    SPONSORS                         */}
+        {/* ================================================== */}
 
-        {normalSponsors.length > 0 && (
-          <div className="mb-14 md:mb-20">
+        {sponsorLogos.length > 0 && (
+          <div className="mb-16 md:mb-24">
 
-            {/* Section title */}
-            <div className="flex items-center gap-4 mb-8">
-              <span className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] whitespace-nowrap">
+            {/* Sponsors heading */}
+            <div className="mb-8 flex items-center gap-4">
+              <span className="mono whitespace-nowrap text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 SPONSORS
               </span>
 
@@ -101,19 +90,18 @@ export function Sponsors() {
             </div>
 
             {/* 
-              IMPORTANT:
-              flex-nowrap keeps all sponsor logos in ONE ROW.
-              overflow-x-auto prevents them from dropping below
-              on smaller screens.
+              ONE ROW
+              No wrapping.
+              On small screens the row can scroll horizontally.
             */}
-            <div className="flex flex-nowrap items-center justify-center gap-6 md:gap-10 overflow-x-auto pb-4">
+            <div className="w-full overflow-x-auto">
+              <div className="flex min-w-max flex-nowrap items-center justify-center gap-6 px-2 md:gap-10">
 
-              {normalSponsors.map((sponsor) => (
-                <div
-                  key={sponsor.id}
-                  className="flex-shrink-0 flex items-center justify-center"
-                >
-                  <div className="flex items-center justify-center h-24 md:h-32 w-[220px] md:w-[280px]">
+                {sponsorLogos.map((sponsor) => (
+                  <div
+                    key={sponsor.id}
+                    className="flex h-28 w-[230px] shrink-0 items-center justify-center md:h-32 md:w-[270px]"
+                  >
                     {sponsor.logoUrl ? (
                       <img
                         src={sponsor.logoUrl}
@@ -122,54 +110,51 @@ export function Sponsors() {
                         className="max-h-full max-w-full object-contain"
                       />
                     ) : (
-                      <span className="display text-lg font-bold text-[#A8A8A8]/40">
+                      <span className="text-center text-lg font-bold text-[#A8A8A8]/40">
                         {sponsor.name}
                       </span>
                     )}
                   </div>
-                </div>
-              ))}
+                ))}
 
+              </div>
             </div>
           </div>
         )}
 
-        {/* ===================================================== */}
-        {/*                  CSE + AI&ML SECTION                   */}
-        {/* ===================================================== */}
+        {/* ================================================== */}
+        {/*                  DEPARTMENTS                        */}
+        {/* ================================================== */}
 
         {departmentLogos.length > 0 && (
           <div>
 
-            {/* Section title */}
-            <div className="flex items-center gap-4 mb-8">
-              <span className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] whitespace-nowrap">
+            {/* Departments heading */}
+            <div className="mb-8 flex items-center gap-4">
+              <span className="mono whitespace-nowrap text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 DEPARTMENTS
               </span>
 
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            {/* 
-              CSE + AI&ML stay below sponsors.
-              They remain circular.
-            */}
-            <div className="flex flex-row items-center justify-center gap-8 md:gap-16">
+            {/* CSE + AI&ML */}
+            <div className="flex flex-row items-start justify-center gap-10 md:gap-20">
 
               {departmentLogos.map((department) => (
                 <div
                   key={department.id}
-                  className="flex flex-col items-center justify-center"
+                  className="flex w-32 shrink-0 flex-col items-center md:w-40"
                 >
 
                   {/* Circular logo */}
-                  <div className="h-28 w-28 md:h-36 md:w-36 rounded-full bg-white overflow-hidden flex items-center justify-center p-2">
+                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white p-2 md:h-36 md:w-36">
                     {department.logoUrl ? (
                       <img
                         src={department.logoUrl}
                         alt={`${department.name} logo`}
                         loading="lazy"
-                        className="h-full w-full object-contain rounded-full"
+                        className="h-full w-full rounded-full object-contain"
                       />
                     ) : (
                       <span className="text-center text-sm font-bold text-black">
@@ -179,7 +164,7 @@ export function Sponsors() {
                   </div>
 
                   {/* Department name */}
-                  <span className="mt-4 mono text-xs uppercase tracking-widest text-[#A8A8A8] text-center">
+                  <span className="mono mt-4 text-center text-xs uppercase tracking-widest text-[#A8A8A8]">
                     {department.name}
                   </span>
 

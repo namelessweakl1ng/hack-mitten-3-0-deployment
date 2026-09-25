@@ -85,7 +85,8 @@ export function Sponsors() {
                 {group.items.map((s) => (
                   <div
                     key={s.id}
-                    className="group bg-[#151515] border border-white/10 rounded-lg p-4 md:p-6 flex flex-col items-center justify-center gap-3 transition-colors hover:border-[#B52A32]/40"
+                    className="group p-4 md:p-6 flex flex-col items-center justify-center gap-3"
+
                   >
                     <div
                       className={`${
@@ -104,9 +105,6 @@ export function Sponsors() {
                       ) : (
                         <span className="display text-lg font-bold text-[#A8A8A8]/40">{s.name}</span>
                       )}
-                    </div>
-                    <div className="text-xs text-white/70 text-center">
-                      {s.name}
                     </div>
                   </div>
                 ))}

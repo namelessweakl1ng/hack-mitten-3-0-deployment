@@ -94,7 +94,34 @@ export function Sponsors() {
 
               <div className={`grid gap-4 md:gap-6 ${TIER_GRID[group.tier]}`}>
                 {group.items.map((s) => (
+<<<<<<< HEAD
                   <SponsorCard key={s.id} sponsor={s} aspect={TIER_ASPECT[s.tier]} />
+=======
+                  <div
+                    key={s.id}
+                    className="group p-4 md:p-6 flex flex-col items-center justify-center gap-3"
+
+                  >
+                    <div
+                      className={`${
+                        group.tier === "SUPPORTER"
+                          ? "aspect-square w-full max-w-[116px] md:max-w-[140px] rounded-full bg-white"
+                          : `${TIER_SIZE[group.tier]} w-full`
+                      } overflow-hidden flex items-center justify-center`}
+                    >
+                      {s.logoUrl ? (
+                        <img
+                          src={s.logoUrl}
+                          alt={`${s.name} logo`}
+                          loading="lazy"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="display text-lg font-bold text-[#A8A8A8]/40">{s.name}</span>
+                      )}
+                    </div>
+                  </div>
+>>>>>>> 377f9d4205af61c9ac4bbeca891c833d70c9b3a7
                 ))}
               </div>
             </div>

@@ -103,16 +103,6 @@ export const COORDINATORS: StaticCoordinator[] = [
   },
 
   {
-    name: "Prof. Srinidhi N Koppal",
-    role: "Assistant Professor",
-    department: "AI&ML",
-    qualification: "M.Sc",
-    type: "FACULTY",
-    image: "/images/faculty_coordinators/sreenidhi.png",
-    email: null,
-    phone: null,
-  },
-  {
     name: "Dr. Mahadeva Prasad Y N",
     role: "Associate Professor",
     department: "CSE",
@@ -139,6 +129,16 @@ export const COORDINATORS: StaticCoordinator[] = [
     qualification: "MCA",
     type: "FACULTY",
     image: "/images/faculty_coordinators/karthik.png",
+    email: null,
+    phone: null,
+  },
+    {
+    name: "Prof. Srinidhi N Koppal",
+    role: "Assistant Professor",
+    department: "AI&ML",
+    qualification: "M.Sc",
+    type: "FACULTY",
+    image: "/images/faculty_coordinators/sreenidhi.png",
     email: null,
     phone: null,
   },

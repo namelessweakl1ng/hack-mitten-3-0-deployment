@@ -26,11 +26,24 @@ export function Gallery() {
   const items: GalleryItem[] = resolveGalleryItems(error ? null : data?.items ?? undefined);
 
   const [currAngle, setCurrAngle] = useState(0);
+  const [vw, setVw] = useState(375);
   const pausedRef = useRef(false);
   const touchStartX = useRef<number | null>(null);
 
+  useEffect(() => {
+    const measure = () => setVw(window.innerWidth);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const isMobile = vw < 640;
+  const cardW = isMobile ? Math.min(vw * 0.62, 200) : 280;
+  const cardH = isMobile ? Math.round(cardW * 0.68) : 185;
+  const radius = isMobile ? Math.min(vw * 0.58, 260) : 380;
+  const stageH = isMobile ? cardH + 60 : 300;
+
   const angleStep = items.length > 0 ? 360 / items.length : 60;
-  const radius = 420;
 
   const safeActiveIdx = items.length > 0
     ? (Math.round(-currAngle / angleStep) % items.length + items.length) % items.length
@@ -114,7 +127,7 @@ export function Gallery() {
           {/* ── 3D Carousel ── */}
           <div
             className="relative select-none"
-            style={{ height: 340, perspective: 1000 }}
+            style={{ height: stageH, perspective: 1000 }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
             onMouseEnter={() => { pausedRef.current = true; }}
@@ -147,10 +160,10 @@ export function Gallery() {
                       }}
                       style={{
                         position: "absolute",
-                        width: 320,
-                        height: 220,
-                        left: -160,
-                        top: -110,
+                        width: cardW,
+                        height: cardH,
+                        left: -cardW / 2,
+                        top: -cardH / 2,
                         borderRadius: 10,
                         overflow: "hidden",
                         cursor: "pointer",
@@ -179,7 +192,7 @@ export function Gallery() {
                           objectFit: "cover",
                           filter: isActive
                             ? "grayscale(0.18) sepia(0.12) saturate(0.85) contrast(1.1) brightness(0.88)"
-                            : "grayscale(0.8) sepia(0.15) saturate(0.4) contrast(1.05) brightness(0.45)",
+                            : "grayscale(0.5) sepia(0.1) saturate(0.6) contrast(1.0) brightness(0.65)",
                           transition: "filter 0.7s ease",
                         }}
                       />

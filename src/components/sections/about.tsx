@@ -70,10 +70,10 @@ export function About() {
 
         <div className="md:col-span-7 md:pl-8 flex flex-col justify-end">
           <p className="text-base md:text-xl text-white/80 leading-relaxed">
-            {cfg?.aboutDescription || "HackMITTEN 3.0 is a 24-hour national-level hackathon organized by the Department of Computer Science and Engineering, Maharaja Institute of Technology Thandavapura, in collaboration with Vigyan Labs. Bringing together aspiring innovators, developers, and technology enthusiasts, the event provides a dynamic platform to explore ideas, collaborate with like-minded individuals, and address real-world industry challenges through technology and innovation."}
+            {cfg?.aboutDescription || "Hackmitten is a 24-hour descent into the unknown — a place where ideas cross the event horizon and emerge as something built, broken, and rebuilt into existence."}
           </p>
           <p className="mt-4 text-sm md:text-base text-[#A8A8A8] leading-relaxed">
-            Centered on the theme of Industry Problem Statements, HackMITTEN 3.0 challenges participants to think creatively, develop practical solutions, and transform innovative ideas into impactful outcomes. Through teamwork, technical exploration, and hands-on problem-solving, participants will have the opportunity to showcase their skills, push the boundaries of innovation, and contribute to solutions that address real-world needs. Join us for 24 hours of creativity, collaboration, and technological excellence.
+            Focused on industry problem statements, the hackathon brings together innovators and developers to collaborate, build practical solutions, and solve real-world challenges through technology and innovation.
           </p>
 
           <div className="mt-8 md:mt-12 grid grid-cols-2 gap-px bg-white/5 border border-white/5">

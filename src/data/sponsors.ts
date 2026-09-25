@@ -31,17 +31,17 @@ export const SPONSORS: StaticSponsor[] = [
     tier: "SUPPORTER",
   },
    {
-    name: "CSE",
-    logo: "/images/sponsors/cse logo.jpeg",
-    website: null,
-    tier: "SUPPORTER",
-  },
-  {
-    name: "AI&ML",
-    logo: "/images/sponsors/aiml logo.jpeg",
-    website: null,
-    tier: "SUPPORTER",
-  },
+  name: "CSE",
+  logo: "/images/sponsors/cse logo.jpeg",
+  website: null,
+  tier: "CUSTOM",
+},
+{
+  name: "AI&ML",
+  logo: "/images/sponsors/aiml logo.jpeg",
+  website: null,
+  tier: "CUSTOM",
+},
 ];
 
 export function resolveSponsors(databaseSponsors?: Array<{ id?: string; name?: string | null; logoUrl?: string | null; websiteUrl?: string | null; tier?: string | null }> | null) {

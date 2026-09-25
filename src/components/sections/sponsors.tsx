@@ -20,7 +20,7 @@ const TIER_LABEL: Record<string, string> = {
   SILVER: "Silver",
   PARTNER: "Partner",
   SUPPORTER: "Supporters",
-  CUSTOM: "Partner",
+  CUSTOM: "Department Partners",
 };
 
 const TIER_SIZE: Record<string, string> = {
@@ -79,8 +79,10 @@ export function Sponsors() {
               </div>
               <div className={`grid gap-4 md:gap-6 ${
                 group.tier === "TITLE" || group.tier === "PLATINUM"
-                  ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-                  : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                : group.tier === "CUSTOM"
+                ? "grid-cols-2 max-w-md mx-auto"
+                : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
               }`}>
                 {group.items.map((s) => (
                   <div

@@ -20,7 +20,7 @@ const TIER_LABEL: Record<string, string> = {
   SILVER: "Silver",
   PARTNER: "Partner",
   SUPPORTER: "Supporters",
-  CUSTOM: "Department Partners",
+  CUSTOM: "Partner",
 };
 
 const TIER_SIZE: Record<string, string> = {

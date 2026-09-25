@@ -89,18 +89,22 @@ export function Sponsors() {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            {/* 
-              ONE ROW
-              No wrapping.
-              On small screens the row can scroll horizontally.
-            */}
-            <div className="w-full overflow-x-auto">
-              <div className="flex min-w-max flex-nowrap items-center justify-center gap-6 px-2 md:gap-10">
+            {/* Sponsor logos - ONE ROW */}
+            <div className="w-full overflow-hidden">
+              <div className="flex w-full flex-nowrap items-center justify-center gap-3 md:gap-5">
 
                 {sponsorLogos.map((sponsor) => (
                   <div
                     key={sponsor.id}
-                    className="flex h-28 w-[230px] shrink-0 items-center justify-center md:h-32 md:w-[270px]"
+                    className="
+                      flex
+                      h-24
+                      min-w-0
+                      flex-1
+                      items-center
+                      justify-center
+                      md:h-28
+                    "
                   >
                     {sponsor.logoUrl ? (
                       <img
@@ -148,7 +152,21 @@ export function Sponsors() {
                 >
 
                   {/* Circular logo */}
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white p-2 md:h-36 md:w-36">
+                  <div
+                    className="
+                      flex
+                      h-28
+                      w-28
+                      items-center
+                      justify-center
+                      overflow-hidden
+                      rounded-full
+                      bg-white
+                      p-2
+                      md:h-36
+                      md:w-36
+                    "
+                  >
                     {department.logoUrl ? (
                       <img
                         src={department.logoUrl}

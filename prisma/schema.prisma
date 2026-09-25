@@ -56,7 +56,7 @@ model EventConfig {
   eventName   String @default("Hackmitten 3.0")
   edition     String @default("3.0")
   tagline     String @default("IDEAS BEYOND THE HORIZON")
-  description String @default("24 hours. Real problems. Limitless possibilities.")
+  description String @default("24 hours. Build. Innovate. Create.")
 
   // Event timing (ISO date strings + HH:mm time + IANA timezone)
   eventStartDate     String @default("")
@@ -78,7 +78,7 @@ model EventConfig {
   heroHeading     String  @default("HACKMITTEN")
   heroEdition     String  @default("3.0")
   heroSubtitle    String  @default("IDEAS BEYOND THE HORIZON")
-  heroDescription String  @default("24 hours. Real problems. Limitless possibilities.")
+  heroDescription String  @default("24 hours. Build. Innovate. Create.")
   heroCtaText     String  @default("REGISTER NOW")
   heroCtaLink     String  @default("/register")
   heroVisible     Boolean @default(true)

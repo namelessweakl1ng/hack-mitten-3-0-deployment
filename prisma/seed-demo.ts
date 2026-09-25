@@ -76,7 +76,7 @@ async function main() {
       heroHeading: "HACKMITTEN",
       heroEdition: "3.0",
       heroSubtitle: "IDEAS BEYOND THE HORIZON | NATIONAL LEVEL HACKATHON",
-      heroDescription: "24 hours. Real problems. Limitless possibilities.",
+      heroDescription: "24 hours. Build. Innovate. Create.",
       heroCtaText: "REGISTER NOW",
       heroCtaLink: "/register",
       heroVisible: true,

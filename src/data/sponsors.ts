@@ -16,19 +16,19 @@ export const SPONSORS: StaticSponsor[] = [
     name: "Sponsor 4",
     logo: "/images/sponsors/logo1.png",
     website: null,
-    tier: "SUPPORTER",
+    tier: "TITLE",
   },
   {
     name: "Sponsor 5",
     logo: "/images/sponsors/logo2.png",
     website: null,
-    tier: "SUPPORTER",
+    tier: "TITLE",
   },
   {
     name: "Sponsor 5",
     logo: "/images/sponsors/logo3.png",
     website: null,
-    tier: "SUPPORTER",
+    tier: "TITLE",
   },
    {
   name: "CSE",

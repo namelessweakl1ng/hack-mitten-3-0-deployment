@@ -25,59 +25,36 @@ export function Gallery() {
 
   const items: GalleryItem[] = resolveGalleryItems(error ? null : data?.items ?? undefined);
 
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [viewportWidth, setViewportWidth] = useState(0);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number | null>(null);
+  const [currAngle, setCurrAngle] = useState(0);
   const pausedRef = useRef(false);
+  const touchStartX = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (items.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => {
-      if (!pausedRef.current) {
-        setActiveIdx((i) => {
-          const next = i + 1;
-          return next >= items.length * 3
-            ? next - items.length
-            : next;
-        });
-      }
-    }, 3200);
-    return () => window.clearInterval(timer);
-  }, [items.length]);
-
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const measure = () => setViewportWidth(el.clientWidth);
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [items.length]);
+  const angleStep = items.length > 0 ? 360 / items.length : 60;
+  const radius = 420;
 
   const safeActiveIdx = items.length > 0
-    ? ((activeIdx % items.length) + items.length) % items.length
+    ? (Math.round(-currAngle / angleStep) % items.length + items.length) % items.length
     : 0;
 
   const goNext = useCallback(() => {
     pausedRef.current = true;
-    setActiveIdx((i) => {
-      const next = i + 1;
-      return items.length > 0 && next >= items.length * 3
-        ? next - items.length
-        : next;
-    });
-  }, [items.length]);
+    setCurrAngle((a) => a - angleStep);
+    window.setTimeout(() => { pausedRef.current = false; }, 2400);
+  }, [angleStep]);
 
   const goPrev = useCallback(() => {
     pausedRef.current = true;
-    setActiveIdx((i) => {
-      const next = i - 1;
-      return items.length > 0 && next <= -items.length
-        ? next + items.length
-        : next;
-    });
-  }, [items.length]);
+    setCurrAngle((a) => a + angleStep);
+    window.setTimeout(() => { pausedRef.current = false; }, 2400);
+  }, [angleStep]);
+
+  useEffect(() => {
+    if (items.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      if (!pausedRef.current) setCurrAngle((a) => a - angleStep);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [items.length, angleStep]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     pausedRef.current = true;
@@ -86,46 +63,14 @@ export function Gallery() {
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) {
-      if (dx < 0) goNext();
-      else goPrev();
-    }
+    if (Math.abs(dx) > 40) dx < 0 ? goNext() : goPrev();
     touchStartX.current = null;
     window.setTimeout(() => { pausedRef.current = false; }, 2400);
   };
 
-  // ─── Responsive geometry ─────────────────────────────────────────────
-  // Mobile: active image takes ~88% of viewport width, side previews are tiny slivers
-  // Desktop: active image takes ~40% (max 480px), side previews ~20% each
-  const isMobile = viewportWidth < 768;
-  const activeWidth = isMobile ? viewportWidth * 0.88 : Math.min(viewportWidth * 0.4, 480);
-  const slotWidth = activeWidth;
-  const gap = isMobile ? 4 : 24;
-
-  // Keep several copies around the active image so the carousel can
-  // move continuously without visibly travelling back to the first image.
-  const loopedItems = [
-    ...items,
-    ...items,
-    ...items,
-    ...items,
-    ...items,
-  ];
-  const loopCenter = items.length * 2;
-  const visualActiveIdx = activeIdx + loopCenter;
-
-  // Track offset to center the active item
-  const trackOffset = viewportWidth > 0
-    ? viewportWidth / 2 - ((activeIdx + loopCenter) * (slotWidth + gap) + slotWidth / 2)
-    : 0;
-
-  // Mobile: no fixed viewport height — let the image aspect ratio define the height
-  // Desktop: keep the cinematic fixed height
-  const viewportHeight = isMobile ? "auto" : "70vh";
-  const viewportMaxHeight = isMobile ? "none" : 640;
-
   return (
     <section id="gallery" className="relative py-12 md:py-24">
+      {/* Header */}
       <div className="mx-auto max-w-7xl px-4 md:px-10 mb-4 md:mb-12">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -142,17 +87,15 @@ export function Gallery() {
             <div className="flex gap-2">
               <button
                 onClick={goPrev}
-                disabled={items.length < 2}
                 aria-label="Previous image"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white disabled:opacity-30 hover:border-[#B52A32] hover:bg-white/5 transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white hover:border-[#B52A32] hover:bg-white/5 transition-all"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={goNext}
-                disabled={items.length < 2}
                 aria-label="Next image"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white disabled:opacity-30 hover:border-[#B52A32] hover:bg-white/5 transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white hover:border-[#B52A32] hover:bg-white/5 transition-all"
               >
                 <ChevronRight size={18} />
               </button>
@@ -167,89 +110,174 @@ export function Gallery() {
         </div>
       ) : (
         <>
-          {/* Gallery viewport — clips overflowing items */}
+          {/* 3D Carousel stage */}
           <div
-            ref={viewportRef}
-            className="relative overflow-hidden select-none"
-            style={{
-              height: viewportHeight,
-              maxHeight: viewportMaxHeight,
-              touchAction: "pan-y",
-              minHeight: isMobile ? 0 : "auto",
-            }}
+            className="relative select-none"
+            style={{ height: 340, perspective: 1100 }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-              onMouseEnter={() => { pausedRef.current = true; }}
-              onMouseLeave={() => { pausedRef.current = false; }}
+            onMouseEnter={() => { pausedRef.current = true; }}
+            onMouseLeave={() => { pausedRef.current = false; }}
           >
-            {/* Track */}
+            {/* Centring anchor */}
             <div
-              className={isMobile ? "flex items-center transition-transform duration-500 ease-out" : "absolute top-0 left-0 flex items-center transition-transform duration-500 ease-out"}
               style={{
-                transform: `translateX(${trackOffset}px)`,
-                gap: `${gap}px`,
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                width: 0,
+                height: 0,
+                transformStyle: "preserve-3d",
               }}
             >
-              {loopedItems.map((item, i) => {
-                const distance = Math.abs(i - visualActiveIdx);
-                const isActive = distance === 0;
-                const scale = isActive ? 1.0 : distance === 1 ? 0.72 : 0.55;
-                 const opacity = isActive ? 1 : distance === 1 ? 0.5 : 0.25;
-                const zIndex = isActive ? 10 : Math.max(1, 5 - distance);
-
-                return (
-                  <figure
-                    key={`${item.id}-${i}`}
-                    className="shrink-0 relative transition-all duration-500 ease-out cursor-pointer"
-                    style={{
-                      width: `${slotWidth}px`,
-                      transform: `scale(${scale})`,
-                      opacity,
-                      zIndex,
-                    }}
-                    onClick={() => {
-                      pausedRef.current = true;
-                      setActiveIdx(i - loopCenter);
-                      window.setTimeout(() => {
-                        pausedRef.current = false;
-                      }, 2400);
-                    }}
-                  >
+              {/* Spinning ring */}
+              <div
+                style={{
+                  position: "absolute",
+                  transformStyle: "preserve-3d",
+                  transition: "transform 1s cubic-bezier(0.19, 1, 0.22, 1)",
+                  transform: `rotateY(${currAngle}deg)`,
+                }}
+              >
+                {items.map((item, index) => {
+                  const angle = angleStep * index;
+                  const isActive = index === safeActiveIdx;
+                  return (
                     <div
-                      className={`relative overflow-hidden bg-[#080808] border transition-colors ${
-                        isActive ? "border-[#B52A32]/50" : "border-white/10"
-                      }`}
+                      key={item.id}
+                      onClick={() => {
+                        pausedRef.current = true;
+                        setCurrAngle(-angle);
+                        window.setTimeout(() => { pausedRef.current = false; }, 2400);
+                      }}
                       style={{
-                        aspectRatio: "4 / 3",
-                        width: "100%",
+                        position: "absolute",
+                        width: 320,
+                        height: 220,
+                        /* centre the card on the anchor point */
+                        left: -160,
+                        top: -110,
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
+                        /* site glass card style */
+                        background: "#0e0e0e",
+                        border: isActive
+                          ? "1px solid rgba(181,42,50,0.6)"
+                          : "1px solid rgba(255,255,255,0.07)",
+                        boxShadow: isActive
+                          ? "0 0 32px 4px rgba(181,42,50,0.25)"
+                          : "0 8px 32px rgba(0,0,0,0.5)",
+                        transition: "border 0.6s ease, box-shadow 0.6s ease",
                       }}
                     >
+                      {/* Image fills the full card */}
                       <img
                         src={item.imageUrl}
                         alt={item.title}
                         loading="lazy"
                         draggable={false}
-                        className="absolute inset-0 h-full w-full object-cover transition-all duration-700"
                         style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
                           filter: isActive
-                            ? "grayscale(0.22) sepia(0.16) saturate(0.82) contrast(1.08) brightness(0.88)"
-                            : "grayscale(0.62) sepia(0.22) saturate(0.62) contrast(1.04) brightness(0.68)",
+                            ? "grayscale(0.18) sepia(0.12) saturate(0.85) contrast(1.1) brightness(0.88)"
+                            : "grayscale(0.8) sepia(0.15) saturate(0.4) contrast(1.05) brightness(0.45)",
+                          transition: "filter 0.7s ease",
                         }}
                       />
-                      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#8B1E24]/20 via-transparent to-[#030303]/45 mix-blend-multiply" />
-                      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_35%,rgba(3,3,3,0.38)_100%)]" />
+
+                      {/* Bottom gradient — same as coordinator / winner cards */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background:
+                            "linear-gradient(to top, rgba(3,3,3,0.82) 0%, rgba(3,3,3,0.18) 55%, transparent 100%)",
+                          pointerEvents: "none",
+                        }}
+                      />
+
+                      {/* Subtle red tint on top-left — matches site palette */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background:
+                            "linear-gradient(135deg, rgba(139,30,36,0.14) 0%, transparent 60%)",
+                          pointerEvents: "none",
+                        }}
+                      />
+
+                      {/* Year badge — top-left, same style as winner position badge */}
+                      {item.year && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            left: 10,
+                            fontFamily: "monospace",
+                            fontSize: 9,
+                            letterSpacing: "0.2em",
+                            textTransform: "uppercase",
+                            padding: "3px 8px",
+                            borderRadius: 4,
+                            backdropFilter: "blur(6px)",
+                            background: isActive ? "#B52A32" : "rgba(0,0,0,0.55)",
+                            color: isActive ? "#fff" : "#B52A32",
+                            border: isActive ? "none" : "1px solid rgba(181,42,50,0.35)",
+                            transition: "all 0.5s ease",
+                          }}
+                        >
+                          {item.year}
+                        </div>
+                      )}
+
+                      {/* Title at bottom */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: 10,
+                          left: 12,
+                          right: 12,
+                          color: "#fff",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          letterSpacing: "-0.01em",
+                          lineHeight: 1.2,
+                          textShadow: "0 1px 6px rgba(0,0,0,0.8)",
+                          opacity: isActive ? 1 : 0.5,
+                          transition: "opacity 0.5s ease",
+                        }}
+                      >
+                        {item.title}
+                      </div>
+
+                      {/* Active glow ring inset */}
                       {isActive && (
-                        <div className="absolute inset-0 pointer-events-none ring-1 ring-[#B52A32]/50" />
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            borderRadius: 12,
+                            pointerEvents: "none",
+                            boxShadow: "inset 0 0 0 1px rgba(181,42,50,0.7)",
+                          }}
+                        />
                       )}
                     </div>
-                  </figure>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Caption — immediately below image, tight spacing */}
-          <div className="mx-auto max-w-7xl px-4 md:px-10 mt-2 min-h-[44px]">
+          {/* Caption */}
+          <div className="mx-auto max-w-7xl px-4 md:px-10 mt-6 min-h-[44px]">
             {items[safeActiveIdx] && (
               <div className="transition-opacity duration-300">
                 <div className="mono text-[10px] uppercase tracking-[0.25em] text-[#B52A32]">

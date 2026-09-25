@@ -32,15 +32,18 @@ export const SPONSORS: StaticSponsor[] = [
   },
    {
   name: "CSE",
-  logo: "/images/sponsors/cse logo.jpeg",
+  logo: "/images/sponsors/cse.png",
   website: null,
-  tier: "SUPPORTER",
+  tier: "CUSTOM",
+  customTier: "Departments",
 },
+
 {
   name: "AI&ML",
-  logo: "/images/sponsors/aiml logo.jpeg",
+  logo: "/images/sponsors/aiml.png",
   website: null,
-  tier: "SUPPORTER",
+  tier: "CUSTOM",
+  customTier: "Departments",
 },
 ];
 

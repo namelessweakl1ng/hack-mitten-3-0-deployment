@@ -78,12 +78,11 @@ export function Sponsors() {
                 <div className="h-px flex-1 bg-white/10" />
               </div>
               <div className={`grid gap-4 md:gap-6 ${
-                group.tier === "TITLE" || group.tier === "PLATINUM"
-                ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-                : group.tier === "CUSTOM"
-                ? "grid-cols-2 max-w-md mx-auto"
-                : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                }`}>
+                    group.tier === "CUSTOM"
+                      ? "grid-cols-2 max-w-sm mx-auto"
+                      : "grid-cols-2 md:grid-cols-4"
+                  }`}
+                >
                 {group.items.map((s) => (
                   <div
                     key={s.id}
@@ -91,12 +90,14 @@ export function Sponsors() {
 
                   >
                     <div
-                      className={`${
-                        group.tier === "SUPPORTER"
-                          ? "aspect-square w-full max-w-[116px] md:max-w-[140px] rounded-full bg-white"
-                          : `${TIER_SIZE[group.tier]} w-full`
-                      } overflow-hidden flex items-center justify-center`}
-                    >
+                        className={`${
+                          group.tier === "SUPPORTER"
+                            ? "h-24 md:h-28 w-full max-w-[280px]"
+                            : group.tier === "CUSTOM"
+                            ? "aspect-square w-full max-w-[116px] md:max-w-[140px] rounded-full bg-white"
+                            : `${TIER_SIZE[group.tier]} w-full`
+                        } overflow-hidden flex items-center justify-center`}
+                      >
                       {s.logoUrl ? (
                         <img
                           src={s.logoUrl}

@@ -14,7 +14,7 @@ type Sponsor = {
 };
 
 const TIER_LABEL: Record<string, string> = {
-  TITLE: "Title Sponsor",
+  TITLE: "Sponsors",
   PLATINUM: "Platinum",
   GOLD: "Gold",
   SILVER: "Silver",

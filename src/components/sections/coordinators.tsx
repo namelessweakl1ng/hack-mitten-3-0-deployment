@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { COORDINATORS } from "@/data/coordinators";
 
 type Coordinator = {
@@ -105,7 +107,7 @@ function CoordinatorGroup({
         <span className="mono text-[10px] uppercase tracking-[0.3em] text-[#A8A8A8]">{title}</span>
         <div className="h-px flex-1 bg-white/10" />
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-1.5 sm:gap-3 md:gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 sm:gap-3 md:gap-4 lg:gap-6">
         {coordinators.map((c) => (
           <CoordinatorCard key={c.id} c={c} />
         ))}
@@ -115,73 +117,93 @@ function CoordinatorGroup({
 }
 
 function CoordinatorCard({ c }: { c: Coordinator }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasContact = Boolean(c.email || c.phone);
+
   return (
     <article
       className={`group relative glass glass-hover rounded-lg overflow-hidden transition-all duration-300 ${
         c.isLead ? "md:col-span-2 md:row-span-1" : ""
-      }`}
+      } ${expanded ? "ring-1 ring-[#B52A32]/50 sm:ring-0" : ""}`}
     >
-      <div
-        className={`relative overflow-hidden ${c.isLead ? "aspect-[16/10]" : "aspect-[4/5] sm:aspect-[4/5]"}`}
+      <button
+        type="button"
+        onClick={() => {
+          if (hasContact && window.matchMedia("(max-width: 639px)").matches) {
+            setExpanded((isExpanded) => !isExpanded);
+          }
+        }}
+        aria-expanded={hasContact ? expanded : undefined}
+        aria-controls={hasContact ? `coordinator-contact-${c.id}` : undefined}
+        aria-label={hasContact ? `${expanded ? "Hide" : "Show"} contact details for ${c.name}` : c.name}
+        className="block w-full text-left"
       >
-        {c.photoUrl ? (
-          <img
-            src={c.photoUrl}
-            alt={c.name}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[#151515] flex items-center justify-center">
-            <span className="display text-2xl sm:text-3xl md:text-4xl font-bold text-[#252525]">
-              {c.name.split(" ").map(n => n[0]).slice(0, 2).join("")}
-            </span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent" />
-        {c.isLead && (
-          <div className="absolute top-3 left-3 mono text-[10px] uppercase tracking-widest text-[#B52A32] border border-[#B52A32] px-2 py-0.5 bg-black/60 backdrop-blur">
-            Lead
-          </div>
-        )}
-      </div>
+        <div
+          className={`relative overflow-hidden ${c.isLead ? "aspect-[16/10]" : "aspect-[4/5] sm:aspect-[4/5]"}`}
+        >
+          {c.photoUrl ? (
+            <img
+              src={c.photoUrl}
+              alt={c.name}
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[#151515] flex items-center justify-center">
+              <span className="display text-2xl sm:text-3xl md:text-4xl font-bold text-[#252525]">
+                {c.name.split(" ").map(n => n[0]).slice(0, 2).join("")}
+              </span>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent" />
+          {c.isLead && (
+            <div className="absolute top-3 left-3 mono text-[10px] uppercase tracking-widest text-[#B52A32] border border-[#B52A32] px-2 py-0.5 bg-black/60 backdrop-blur">
+              Lead
+            </div>
+          )}
+        </div>
 
-      <div className="p-1.5 sm:p-3 md:p-4 lg:p-5">
-        <h3 className="display text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold text-white tracking-tight leading-tight break-words">
-          {c.name}
-        </h3>
-        <div className="mt-1 text-[8px] sm:text-xs text-[#B52A32] leading-tight break-words whitespace-normal">{c.role}</div>
-        {c.type === "FACULTY" && c.qualification && (
-          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] leading-tight break-words whitespace-normal">
-            {c.qualification}
-          </div>
-        )}
-        {c.department && (
-          <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] leading-tight break-words whitespace-normal">{c.department}</div>
-        )}
+        <div className="p-1.5 sm:p-3 md:p-4 lg:p-5">
+          <h3 className="display text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold text-white tracking-tight leading-tight break-words">
+            {c.name}
+          </h3>
+          <div className="mt-1 text-[8px] sm:text-xs text-[#B52A32] leading-tight break-words whitespace-normal">{c.role}</div>
+          {c.type === "FACULTY" && c.qualification && (
+            <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] leading-tight break-words whitespace-normal">
+              {c.qualification}
+            </div>
+          )}
+          {c.department && (
+            <div className="mt-1 text-[9px] sm:text-[10px] md:text-[11px] text-[#A8A8A8] leading-tight break-words whitespace-normal">{c.department}</div>
+          )}
+          {hasContact && (
+            <div className="mt-2 flex items-center gap-1 mono text-[8px] uppercase tracking-widest text-[#B52A32] sm:hidden">
+              Contact <ChevronDown size={11} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+            </div>
+          )}
+        </div>
+      </button>
 
-        {/* Email & phone: hide on very small screens to keep cards compact at 4-per-row */}
-        {(c.email || c.phone) && (
-          <div className="hidden sm:block mt-3 pt-3 border-t border-white/5 space-y-1">
-            {c.email && (
-              <a
-                href={`mailto:${c.email}`}
-                className="block text-[11px] text-[#A8A8A8] hover:text-white truncate transition-colors"
-              >
-                {c.email}
-              </a>
-            )}
-            {c.phone && (
-              <a
-                href={`tel:${c.phone}`}
-                className="block text-[11px] text-[#A8A8A8] hover:text-white transition-colors"
-              >
-                {c.phone}
-              </a>
-            )}
-          </div>
-        )}
-      </div>
+      {hasContact && (
+        <div id={`coordinator-contact-${c.id}`} className={`${expanded ? "block" : "hidden"} sm:block mt-3 sm:-mt-2 mx-1.5 sm:mx-3 md:mx-4 lg:mx-5 mb-1.5 sm:mb-0 pt-3 border-t border-white/5 space-y-1`}>
+          {c.email && (
+            <a
+              href={`mailto:${c.email}`}
+              className="block max-w-full text-[10px] sm:text-[11px] text-[#A8A8A8] hover:text-white break-words transition-colors"
+            >
+              {c.email}
+            </a>
+          )}
+          {c.phone && (
+            <a
+              href={`tel:${c.phone}`}
+              className="block text-[10px] sm:text-[11px] text-[#A8A8A8] hover:text-white transition-colors"
+            >
+              {c.phone}
+            </a>
+          )}
+        </div>
+      )}
     </article>
   );
 }

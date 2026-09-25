@@ -109,10 +109,6 @@ export function Hero() {
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
-        <span className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8]/60">Scroll</span>
-        <div className="h-8 w-px bg-gradient-to-b from-[#B52A32]/80 to-transparent" />
-      </div>
     </section>
   );
 }

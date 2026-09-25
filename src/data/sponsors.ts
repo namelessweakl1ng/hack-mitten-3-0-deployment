@@ -14,13 +14,13 @@ export const SPONSORS: StaticSponsor[] = [
   },
   {
     name: "Sponsor 4",
-    logo: "/images/sponsors/logo1.png",
+    logo: "/images/sponsors/logo2.png",
     website: null,
     tier: "TITLE",
   },
   {
     name: "Sponsor 5",
-    logo: "/images/sponsors/logo2.png",
+    logo: "/images/sponsors/logo1.png",
     website: null,
     tier: "TITLE",
   },

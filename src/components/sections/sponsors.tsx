@@ -83,7 +83,7 @@ export function Sponsors() {
                 : group.tier === "CUSTOM"
                 ? "grid-cols-2 max-w-md mx-auto"
                 : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-              }`}>
+                }`}>
                 {group.items.map((s) => (
                   <div
                     key={s.id}

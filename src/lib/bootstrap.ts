@@ -28,7 +28,7 @@ export const DEFAULT_EVENT_CONFIG = {
   heroCtaLink: "/register",
   heroVisible: true,
   aboutHeading: "BUILD. BREAK. REBUILD.",
-  aboutDescription: "Hackmitten is a 24-hour descent into the unknown, where ideas cross the event horizon and emerge as something built, broken, and rebuilt into existence.",
+  aboutDescription: "HackMITTEN 3.0 is a 24-hour national-level hackathon organized by the Department of Computer Science and Engineering, Maharaja Institute of Technology Thandavapura, in collaboration with Vigyan Labs. Bringing together aspiring innovators, developers, and technology enthusiasts, the event provides a dynamic platform to explore ideas, collaborate with like-minded individuals, and address real-world industry challenges through technology and innovation.",
   aboutStatDuration: "24",
   aboutStatTeamSize: "3—4",
   aboutStatFee: "₹1,000",

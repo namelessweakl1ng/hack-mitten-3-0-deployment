@@ -42,15 +42,39 @@ export function Sponsors() {
     return null;
   }
 
-  // CSE and AI&ML department logos
+  /* ================================
+     SEPARATE SPONSORS AND DEPARTMENTS
+     ================================ */
+
+  const sponsorLogos = sponsors.filter(
+    (sponsor) => sponsor.tier !== "CUSTOM"
+  );
+
   const departmentLogos = sponsors.filter(
     (sponsor) => sponsor.tier === "CUSTOM"
   );
 
-  // All actual sponsors
-  const sponsorLogos = sponsors.filter(
-    (sponsor) => sponsor.tier !== "CUSTOM"
-  );
+  /* ================================
+     DEPARTMENT LOGO FALLBACK
+     ================================ */
+
+  const getDepartmentLogo = (department: Sponsor) => {
+    if (department.logoUrl) {
+      return department.logoUrl;
+    }
+
+    const name = department.name.toLowerCase();
+
+    if (name.includes("cse")) {
+      return "/images/sponsors/cse.png";
+    }
+
+    if (name.includes("ai") || name.includes("ml")) {
+      return "/images/sponsors/aiml.png";
+    }
+
+    return "";
+  };
 
   return (
     <section
@@ -59,7 +83,9 @@ export function Sponsors() {
     >
       <div className="mx-auto max-w-7xl px-5 md:px-10">
 
-        {/* ================= HEADER ================= */}
+        {/* ================================
+                    HEADER
+            ================================ */}
 
         <div className="mb-10 text-center md:mb-16">
           <div className="mono mb-4 text-xs uppercase tracking-[0.3em] text-[#B52A32]">
@@ -73,14 +99,14 @@ export function Sponsors() {
           </h2>
         </div>
 
-        {/* ================================================== */}
-        {/*                    SPONSORS                         */}
-        {/* ================================================== */}
+        {/* =====================================================
+                            SPONSORS
+            ===================================================== */}
 
         {sponsorLogos.length > 0 && (
           <div className="mb-16 md:mb-24">
 
-            {/* Sponsors heading */}
+            {/* Sponsors title */}
             <div className="mb-8 flex items-center gap-4">
               <span className="mono whitespace-nowrap text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 SPONSORS
@@ -89,51 +115,56 @@ export function Sponsors() {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            {/* Sponsor logos - ONE ROW */}
-            <div className="w-full overflow-hidden">
-              <div className="flex w-full flex-nowrap items-center justify-center gap-3 md:gap-5">
+            {/* 
+              FOUR EQUAL COLUMNS
+              All sponsor logos get the same amount of space.
+            */}
+            <div className="grid w-full grid-cols-4 items-center gap-3 md:gap-6">
 
-                {sponsorLogos.map((sponsor) => (
-                  <div
-                    key={sponsor.id}
-                    className="
-                      flex
-                      h-24
-                      min-w-0
-                      flex-1
-                      items-center
-                      justify-center
-                      md:h-28
-                    "
-                  >
-                    {sponsor.logoUrl ? (
-                      <img
-                        src={sponsor.logoUrl}
-                        alt={`${sponsor.name} logo`}
-                        loading="lazy"
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-center text-lg font-bold text-[#A8A8A8]/40">
-                        {sponsor.name}
-                      </span>
-                    )}
-                  </div>
-                ))}
+              {sponsorLogos.map((sponsor) => (
+                <div
+                  key={sponsor.id}
+                  className="
+                    flex
+                    h-24
+                    min-w-0
+                    items-center
+                    justify-center
+                    md:h-32
+                  "
+                >
+                  {sponsor.logoUrl ? (
+                    <img
+                      src={sponsor.logoUrl}
+                      alt={`${sponsor.name} logo`}
+                      loading="lazy"
+                      className="
+                        block
+                        max-h-full
+                        max-w-full
+                        object-contain
+                      "
+                    />
+                  ) : (
+                    <span className="text-center text-sm font-bold text-[#A8A8A8]/50 md:text-lg">
+                      {sponsor.name}
+                    </span>
+                  )}
+                </div>
+              ))}
 
-              </div>
             </div>
           </div>
         )}
 
-        {/* ================================================== */}
-        {/*                  DEPARTMENTS                        */}
-        {/* ================================================== */}
+        {/* =====================================================
+                         DEPARTMENTS
+            ===================================================== */}
 
         {departmentLogos.length > 0 && (
           <div>
 
-            {/* Departments heading */}
+            {/* Departments title */}
             <div className="mb-8 flex items-center gap-4">
               <span className="mono whitespace-nowrap text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 DEPARTMENTS
@@ -143,51 +174,71 @@ export function Sponsors() {
             </div>
 
             {/* CSE + AI&ML */}
-            <div className="flex flex-row items-start justify-center gap-10 md:gap-20">
+            <div className="flex items-start justify-center gap-12 md:gap-24">
 
-              {departmentLogos.map((department) => (
-                <div
-                  key={department.id}
-                  className="flex w-32 shrink-0 flex-col items-center md:w-40"
-                >
+              {departmentLogos.map((department) => {
+                const logo = getDepartmentLogo(department);
 
-                  {/* Circular logo */}
+                return (
                   <div
-                    className="
-                      flex
-                      h-28
-                      w-28
-                      items-center
-                      justify-center
-                      overflow-hidden
-                      rounded-full
-                      bg-white
-                      p-2
-                      md:h-36
-                      md:w-36
-                    "
+                    key={department.id}
+                    className="flex w-32 flex-col items-center md:w-40"
                   >
-                    {department.logoUrl ? (
-                      <img
-                        src={department.logoUrl}
-                        alt={`${department.name} logo`}
-                        loading="lazy"
-                        className="h-full w-full rounded-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-center text-sm font-bold text-black">
-                        {department.name}
-                      </span>
-                    )}
+
+                    {/* Circular logo */}
+                    <div
+                      className="
+                        flex
+                        h-28
+                        w-28
+                        items-center
+                        justify-center
+                        overflow-hidden
+                        rounded-full
+                        bg-white
+                        p-2
+                        shadow-lg
+                        md:h-36
+                        md:w-36
+                      "
+                    >
+                      {logo ? (
+                        <img
+                          src={logo}
+                          alt={`${department.name} logo`}
+                          loading="lazy"
+                          className="
+                            h-full
+                            w-full
+                            rounded-full
+                            object-contain
+                          "
+                        />
+                      ) : (
+                        <span className="text-center text-sm font-bold text-black">
+                          {department.name}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Department name */}
+                    <span
+                      className="
+                        mono
+                        mt-4
+                        text-center
+                        text-xs
+                        uppercase
+                        tracking-widest
+                        text-[#A8A8A8]
+                      "
+                    >
+                      {department.name}
+                    </span>
+
                   </div>
-
-                  {/* Department name */}
-                  <span className="mono mt-4 text-center text-xs uppercase tracking-widest text-[#A8A8A8]">
-                    {department.name}
-                  </span>
-
-                </div>
-              ))}
+                );
+              })}
 
             </div>
           </div>

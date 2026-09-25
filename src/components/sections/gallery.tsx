@@ -38,10 +38,10 @@ export function Gallery() {
   }, []);
 
   const isMobile = vw < 640;
-  const cardW = isMobile ? Math.min(vw * 0.62, 200) : 280;
+  const cardW = isMobile ? Math.min(vw * 0.55, 180) : 280;
   const cardH = isMobile ? Math.round(cardW * 0.68) : 185;
-  const radius = isMobile ? Math.min(vw * 0.58, 260) : 380;
-  const stageH = isMobile ? cardH + 60 : 300;
+  const radius = isMobile ? Math.min(vw * 0.75, 320) : 380;
+  const stageH = isMobile ? cardH + 80 : 300;
 
   const angleStep = items.length > 0 ? 360 / items.length : 60;
 

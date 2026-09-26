@@ -69,14 +69,6 @@ export function Gallery() {
     return () => window.clearInterval(timer);
   }, [items.length, angleStep]);
 
-  const pauseCarousel = () => {
-    pausedRef.current = true;
-  };
-
-  const resumeCarousel = () => {
-    pausedRef.current = false;
-  };
-
   const onTouchStart = (e: React.TouchEvent) => {
     pausedRef.current = true;
     touchStartX.current = e.touches[0].clientX;
@@ -84,13 +76,7 @@ export function Gallery() {
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) {
-  if (dx < 0) {
-    goNext();
-  } else {
-    goPrev();
-  }
-}
+    if (Math.abs(dx) > 40) dx < 0 ? goNext() : goPrev();
     touchStartX.current = null;
     window.setTimeout(() => { pausedRef.current = false; }, 2400);
   };
@@ -144,8 +130,8 @@ export function Gallery() {
             style={{ height: stageH, perspective: 1000 }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            onMouseEnter={pauseCarousel}
-            onMouseLeave={resumeCarousel}
+            onMouseEnter={() => { pausedRef.current = true; }}
+            onMouseLeave={() => { pausedRef.current = false; }}
           >
             {/* centring anchor */}
             <div style={{

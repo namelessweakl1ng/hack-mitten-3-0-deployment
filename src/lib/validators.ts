@@ -1,50 +1,17 @@
 import { z } from "zod";
 
-const allowedPassportMimeTypes = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
-
-const safeServerGeneratedPassportPath = /^((?:\/uploads\/passports\/|private:\/\/passport-images\/|supabase:\/\/passport-images\/)[A-Za-z0-9_\-/]+\.(jpe?g|png|webp|gif))$/i;
-
-export const memberSchema = z
-  .object({
-    fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
-    email: z
-      .string()
-      .email("Invalid email")
-      .refine((v) => v.toLowerCase().endsWith("@gmail.com"), "Email must be a @gmail.com address"),
-    phone: z
-      .string()
-      .regex(/^[6-9][0-9]{9}$/, "Phone must be a valid 10-digit Indian mobile number"),
-    college: z.string().min(2, "College name required").max(150),
-    degree: z.string().trim().min(2, "Degree is required").max(60),
-    passportImagePath: z
-      .string()
-      .trim()
-      .min(1, "Passport photo is required")
-      .refine((value) => safeServerGeneratedPassportPath.test(value), "Passport image path must be a server-generated upload path"),
-    passportImageName: z.string().trim().min(1, "Passport image name is required").max(200),
-    passportImageMimeType: z
-      .string()
-      .trim()
-      .min(1, "Passport image MIME type is required")
-      .refine((value) => allowedPassportMimeTypes.has(value.toLowerCase()) || value.toLowerCase().startsWith("image/"), "Passport image MIME type is invalid"),
-    passportImageSizeBytes: z.number().int().min(1, "Passport image size is required").max(50000, "Passport image must be 50 KB or smaller"),
-    isLeader: z.boolean().optional(),
-  })
-  .superRefine((member, ctx) => {
-    if (member.passportImagePath.includes("../") || member.passportImagePath.includes("\\")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["passportImagePath"],
-        message: "Passport image path contains invalid path traversal characters",
-      });
-    }
-  })
-  .transform(({ isLeader: _isLeader, ...member }) => member);
+export const memberSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
+  email: z
+    .string()
+    .email("Invalid email")
+    .refine((v) => v.toLowerCase().endsWith("@gmail.com"), "Email must be a @gmail.com address"),
+  phone: z
+    .string()
+    .regex(/^[6-9][0-9]{9}$/, "Phone must be a valid 10-digit Indian mobile number"),
+  college: z.string().min(2, "College name required").max(150),
+  degree: z.string().max(60).optional().or(z.literal("")),
+});
 
 export const registrationSchema = z
   .object({
@@ -57,17 +24,7 @@ export const registrationSchema = z
     members: z.array(memberSchema).min(3, "Minimum 3 members required").max(4, "Maximum 4 members allowed"),
   })
   .superRefine((data, ctx) => {
-    const normalizedMembers = normalizeRegistrationMembers(data.members);
-    const leaderCount = normalizedMembers.filter((member) => member.isLeader).length;
-
-    if (leaderCount !== 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["members"],
-        message: "Exactly one team leader is required",
-      });
-    }
-
+    // Prevent duplicate member emails within the team
     const emails = data.members.map((m) => m.email.toLowerCase().trim());
     const seen = new Set<string>();
     emails.forEach((email, idx) => {

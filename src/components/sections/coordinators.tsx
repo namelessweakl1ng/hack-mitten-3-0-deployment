@@ -1,7 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  Github,
+  Linkedin,
+  Phone,
+} from "lucide-react";
 import { useState } from "react";
 import { COORDINATORS } from "@/data/coordinators";
 import { DEVELOPING_TEAM } from "@/data/developing-team";
@@ -56,22 +61,12 @@ export function Coordinators() {
           isLead: c.isLead ?? false,
         }));
 
-  /*
-   * ============================================================
-   * FACULTY
-   * ============================================================
-   */
-
+  // Faculty first
   const faculty = coordinators.filter(
     (coordinator) => coordinator.type === "FACULTY"
   );
 
-  /*
-   * ============================================================
-   * STUDENTS
-   * ============================================================
-   */
-
+  // Students second
   const students = coordinators
     .filter((coordinator) => coordinator.type === "STUDENT")
     .sort((a, b) => {
@@ -85,10 +80,6 @@ export function Coordinators() {
       return 0;
     });
 
-  /*
-   * Don't hide the section if only the developing team exists.
-   */
-
   if (coordinators.length === 0 && DEVELOPING_TEAM.length === 0) {
     return null;
   }
@@ -98,9 +89,7 @@ export function Coordinators() {
       id="crew"
       className="relative section-pad mx-auto max-w-7xl"
     >
-      {/* ===================================================== */}
-      {/* HEADER                                                 */}
-      {/* ===================================================== */}
+      {/* ================= HEADER ================= */}
 
       <div className="mb-12 md:mb-16">
         <div className="mono mb-4 text-xs uppercase tracking-[0.3em] text-[#B52A32]">
@@ -117,7 +106,7 @@ export function Coordinators() {
       </div>
 
       {/* ===================================================== */}
-      {/* 1. FACULTY COORDINATORS                               */}
+      {/* 1. FACULTY COORDINATORS                              */}
       {/* ===================================================== */}
 
       <CoordinatorGroup
@@ -128,7 +117,7 @@ export function Coordinators() {
       <div className="h-16 md:h-20" />
 
       {/* ===================================================== */}
-      {/* 2. STUDENT COORDINATORS                               */}
+      {/* 2. STUDENT COORDINATORS                              */}
       {/* ===================================================== */}
 
       <CoordinatorGroup
@@ -139,7 +128,7 @@ export function Coordinators() {
       <div className="h-16 md:h-20" />
 
       {/* ===================================================== */}
-      {/* 3. DEVELOPING & DESIGN TEAM                           */}
+      {/* 3. DEVELOPING & DESIGN TEAM                          */}
       {/* ===================================================== */}
 
       <DevelopingTeam />
@@ -179,7 +168,6 @@ function CoordinatorGroup({
 
   return (
     <div>
-      {/* Group heading */}
       <div className="mb-6 flex items-center gap-4">
         <span className="mono whitespace-nowrap text-[10px] uppercase tracking-[0.3em] text-[#A8A8A8]">
           {title}
@@ -188,7 +176,6 @@ function CoordinatorGroup({
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Coordinator cards */}
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 md:gap-4 lg:gap-6">
         {coordinators.map((coordinator) => (
           <CoordinatorCard
@@ -246,6 +233,7 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
         className="block w-full text-left"
       >
         {/* Photo */}
+
         <div
           className={`relative overflow-hidden ${
             c.isLead
@@ -272,10 +260,8 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
             </div>
           )}
 
-          {/* Gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent" />
 
-          {/* Lead badge */}
           {c.isLead && (
             <div className="absolute left-3 top-3 border border-[#B52A32] bg-black/60 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#B52A32] backdrop-blur">
               Lead
@@ -284,6 +270,7 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
         </div>
 
         {/* Details */}
+
         <div className="p-1.5 sm:p-3 md:p-4 lg:p-5">
           <h3 className="display break-words text-[10px] font-semibold leading-tight tracking-tight text-white sm:text-sm md:text-base lg:text-lg">
             {c.name}
@@ -321,6 +308,7 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
       </button>
 
       {/* Contact information */}
+
       {hasContact && (
         <div
           id={`coordinator-contact-${c.id}`}
@@ -363,6 +351,7 @@ function DevelopingTeam() {
   return (
     <div>
       {/* Heading */}
+
       <div className="mb-6 flex items-center gap-4">
         <span className="mono whitespace-nowrap text-[10px] uppercase tracking-[0.3em] text-[#A8A8A8]">
           DEVELOPING & DESIGN TEAM
@@ -372,49 +361,173 @@ function DevelopingTeam() {
       </div>
 
       {/* Team cards */}
+
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 md:gap-4 lg:gap-6">
         {DEVELOPING_TEAM.map((member) => (
-          <article
+          <DevelopingTeamCard
             key={member.id}
-            className="group relative overflow-hidden rounded-lg glass glass-hover transition-all duration-300"
-          >
-            {/* Team photo */}
-            <div className="relative aspect-[4/5] overflow-hidden">
-              {member.image ? (
-                <img
-                  src={member.image}
-                  alt={`${member.name} - ${member.role}`}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#151515]">
-                  <span className="display text-2xl font-bold text-[#252525] sm:text-3xl md:text-4xl">
-                    {member.name
-                      .split(" ")
-                      .map((name) => name[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </span>
-                </div>
-              )}
-
-              <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent" />
-            </div>
-
-            {/* Team details */}
-            <div className="p-1.5 sm:p-3 md:p-4 lg:p-5">
-              <h3 className="display break-words text-[10px] font-semibold leading-tight tracking-tight text-white sm:text-sm md:text-base lg:text-lg">
-                {member.name}
-              </h3>
-
-              <div className="mt-1 break-words text-[8px] uppercase leading-tight tracking-wide text-[#B52A32] sm:text-xs">
-                {member.role}
-              </div>
-            </div>
-          </article>
+            member={member}
+          />
         ))}
       </div>
     </div>
+  );
+}
+
+/* ============================================================ */
+/* DEVELOPING TEAM CARD                                          */
+/* ============================================================ */
+
+function DevelopingTeamCard({
+  member,
+}: {
+  member: (typeof DEVELOPING_TEAM)[number];
+}) {
+  /*
+   * Social/contact information for each developing team member.
+   */
+
+  const socialLinks: {
+    type: "linkedin" | "github" | "phone";
+    label: string;
+    url: string;
+  }[] = [];
+
+  if (member.name === "Manjunath P") {
+    socialLinks.push(
+      {
+        type: "linkedin",
+        label: "LinkedIn",
+        url: "https://www.linkedin.com/in/manjunatha67p/",
+      },
+      {
+        type: "github",
+        label: "GitHub",
+        url: "https://github.com/namelessweakl1ng",
+      }
+    );
+  }
+
+  if (member.name === "Person 2") {
+    socialLinks.push(
+      {
+        type: "linkedin",
+        label: "LinkedIn",
+        url: "https://www.linkedin.com/in/pradeep-kadakol-602220333/",
+      },
+      {
+        type: "github",
+        label: "GitHub",
+        url: "https://github.com/pradeepkadakol",
+      }
+    );
+  }
+
+  if (member.name === "Person 3") {
+    socialLinks.push(
+      {
+        type: "linkedin",
+        label: "LinkedIn",
+        url: "https://www.linkedin.com/in/sharath-hn-368449228/",
+      },
+      {
+        type: "github",
+        label: "GitHub",
+        url: "https://github.com/sharath-6363",
+      }
+    );
+  }
+
+  if (member.name === "Person 4") {
+    socialLinks.push({
+      type: "phone",
+      label: "Call",
+      url: "tel:8296338351",
+    });
+  }
+
+  return (
+    <article className="group relative overflow-hidden rounded-lg glass glass-hover transition-all duration-300">
+      {/* Team photo */}
+
+      <div className="relative aspect-[4/5] overflow-hidden">
+        {member.image ? (
+          <img
+            src={member.image}
+            alt={`${member.name} - ${member.role}`}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#151515]">
+            <span className="display text-2xl font-bold text-[#252525] sm:text-3xl md:text-4xl">
+              {member.name
+                .split(" ")
+                .map((name) => name[0])
+                .slice(0, 2)
+                .join("")}
+            </span>
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent" />
+      </div>
+
+      {/* Team details */}
+
+      <div className="p-2 sm:p-3 md:p-4 lg:p-5">
+        <h3 className="display break-words text-[10px] font-semibold leading-tight tracking-tight text-white sm:text-sm md:text-base lg:text-lg">
+          {member.name}
+        </h3>
+
+        <div className="mt-1 break-words text-[8px] uppercase leading-tight tracking-wide text-[#B52A32] sm:text-xs">
+          {member.role}
+        </div>
+
+        {/* CONNECTS */}
+
+        {socialLinks.length > 0 && (
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <div className="mono mb-2 text-[8px] uppercase tracking-[0.25em] text-[#A8A8A8]">
+              CONNECTS
+            </div>
+
+            <div className="flex items-center gap-2">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.type}
+                  href={link.url}
+                  target={
+                    link.type === "phone"
+                      ? undefined
+                      : "_blank"
+                  }
+                  rel={
+                    link.type === "phone"
+                      ? undefined
+                      : "noopener noreferrer"
+                  }
+                  aria-label={`${link.label} - ${member.name}`}
+                  title={link.label}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#A8A8A8] transition-all duration-200 hover:border-[#B52A32] hover:bg-[#B52A32] hover:text-white"
+                >
+                  {link.type === "linkedin" && (
+                    <Linkedin size={14} strokeWidth={2} />
+                  )}
+
+                  {link.type === "github" && (
+                    <Github size={14} strokeWidth={2} />
+                  )}
+
+                  {link.type === "phone" && (
+                    <Phone size={14} strokeWidth={2} />
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }

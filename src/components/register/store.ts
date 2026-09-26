@@ -8,6 +8,10 @@ export interface MemberForm {
   phone: string;
   college: string;
   degree: string;
+  passportImagePath: string;
+  passportImageName: string;
+  passportImageMimeType: string;
+  passportImageSizeBytes: number;
 }
 
 interface RegisterState {
@@ -50,7 +54,17 @@ interface RegisterState {
   reset: () => void;
 }
 
-const emptyMember = (): MemberForm => ({ fullName: "", email: "", phone: "", college: "", degree: "" });
+const emptyMember = (): MemberForm => ({
+  fullName: "",
+  email: "",
+  phone: "",
+  college: "",
+  degree: "",
+  passportImagePath: "",
+  passportImageName: "",
+  passportImageMimeType: "",
+  passportImageSizeBytes: 0,
+});
 
 export const useRegisterStore = create<RegisterState>((set) => ({
   step: 0,

@@ -106,7 +106,7 @@ export const COORDINATORS: StaticCoordinator[] = [
     name: "Dr. Mahadeva Prasad Y N",
     role: "Associate Professor",
     department: "CSE",
-    qualification: "M.Tech, Ph.D",
+    qualification: "M.Tech and Ph.D",
     type: "FACULTY",
     image: "/images/faculty_coordinators/mahadevprasad.png",
     email: null,

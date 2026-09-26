@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { HACKMITTEN_EVENT } from "@/lib/event-config";
 
 type EventConfig = {
   eventName: string;
@@ -11,7 +10,10 @@ type EventConfig = {
   collegeName: string;
   collegeLogoUrl: string;
   contactEmail: string;
-  socialLinks: { instagram?: string; linkedin?: string };
+  socialLinks: {
+    instagram?: string;
+    linkedin?: string;
+  };
 };
 
 export function Footer() {
@@ -19,11 +21,12 @@ export function Footer() {
     queryKey: ["config"],
     queryFn: async () => (await fetch("/api/config")).json(),
   });
+
   const cfg = data?.config;
 
   return (
     <footer
-      className="relative mt-20 md:mt-32 pt-12 md:pt-20"
+      className="relative mt-20 pt-12 md:mt-32 md:pt-20"
       style={{
         borderTop: "1px solid rgba(181, 42, 50, 0.2)",
         boxShadow: "0 -1px 20px -5px rgba(181, 42, 50, 0.15)",
@@ -31,121 +34,165 @@ export function Footer() {
     >
       {/* Subtle gradient transition band at the top of the footer */}
       <div
-        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        className="pointer-events-none absolute top-0 left-0 right-0 h-px"
         style={{
-          background: "linear-gradient(to right, transparent 0%, rgba(181, 42, 50, 0.4) 50%, transparent 100%)",
+          background:
+            "linear-gradient(to right, transparent 0%, rgba(181, 42, 50, 0.4) 50%, transparent 100%)",
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#000] pointer-events-none" />
 
-      <div className="relative mx-auto max-w-7xl px-5 md:px-10 py-14 md:py-24">
-        <div className="grid gap-10 md:gap-12 md:grid-cols-12">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-[#000]" />
+
+      <div className="relative mx-auto max-w-7xl px-5 py-14 md:px-10 md:py-24">
+        <div className="grid gap-10 md:grid-cols-12 md:gap-12">
+
+          {/* ================= LEFT SECTION ================= */}
           <div className="md:col-span-7">
-            <h3 className="display text-3xl md:text-5xl font-bold tracking-tight text-white leading-[0.95]">
+            <h3 className="display text-3xl font-bold leading-[0.95] tracking-tight text-white md:text-5xl">
               {cfg?.footerText || "SEE YOU AT THE EVENT HORIZON."}
             </h3>
+
             <div className="mt-6 flex items-baseline gap-2">
-              <span className="display text-xl md:text-2xl font-bold text-white">
+              <span className="display text-xl font-bold text-white md:text-2xl">
                 {cfg?.eventName || "HACKMITTEN"}
               </span>
-              <span className="mono text-xs md:text-sm text-[#B52A32]">{cfg?.edition || "3.0"}</span>
+
+              <span className="mono text-xs text-[#B52A32] md:text-sm">
+                {cfg?.edition || "3.0"}
+              </span>
             </div>
           </div>
 
-          <div className="md:col-span-5 grid grid-cols-2 gap-6 text-sm">
+          {/* ================= RIGHT SECTION ================= */}
+          <div className="grid grid-cols-2 gap-6 text-sm md:col-span-5">
+
+            {/* Contact */}
             <div>
-              <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mb-3">
+              <div className="mono mb-3 text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 Contact
               </div>
+
               {cfg?.contactEmail && (
                 <a
                   href={`mailto:${cfg.contactEmail}`}
-                  className="block text-white/80 hover:text-white break-words"
+                  className="block break-words text-white/80 transition-colors hover:text-white"
                 >
                   {cfg.contactEmail}
                 </a>
               )}
-              {/* NO PHONE NUMBER per spec */}
             </div>
 
+            {/* Venue */}
             <div>
-              <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mb-3">
+              <div className="mono mb-3 text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 Venue
               </div>
-              <div className="text-white/80 leading-snug">
-                {cfg?.collegeName || "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA"}
+
+              <div className="leading-snug text-white/80">
+                {cfg?.collegeName ||
+                  "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA"}
               </div>
             </div>
 
+            {/* Quick Links */}
             <div>
-              <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mb-3">
+              <div className="mono mb-3 text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 Quick Links
               </div>
-              <Link href="/" className="block text-white/80 hover:text-white">Home</Link>
-              <Link href="/#about" className="block text-white/80 hover:text-white">About</Link>
-              <Link href="/#gallery" className="block text-white/80 hover:text-white">Gallery</Link>
-              <Link href="/#crew" className="block text-white/80 hover:text-white">Crew</Link>
+
+              <Link
+                href="/"
+                className="block text-white/80 transition-colors hover:text-white"
+              >
+                Home
+              </Link>
+
+              <Link
+                href="/#about"
+                className="block text-white/80 transition-colors hover:text-white"
+              >
+                About
+              </Link>
+
+              <Link
+                href="/#gallery"
+                className="block text-white/80 transition-colors hover:text-white"
+              >
+                Gallery
+              </Link>
+
+              <Link
+                href="/#crew"
+                className="block text-white/80 transition-colors hover:text-white"
+              >
+                Crew
+              </Link>
             </div>
 
+            {/* Social */}
             <div>
-              <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mb-3">
+              <div className="mono mb-3 text-[10px] uppercase tracking-widest text-[#A8A8A8]">
                 Social
               </div>
+
               {cfg?.socialLinks?.instagram && (
-                <a href={cfg.socialLinks.instagram} target="_blank" rel="noreferrer" className="block text-white/80 hover:text-white">
+                <a
+                  href={cfg.socialLinks.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-white/80 transition-colors hover:text-white"
+                >
                   Instagram
                 </a>
               )}
+
               {cfg?.socialLinks?.linkedin && (
-                <a href={cfg.socialLinks.linkedin} target="_blank" rel="noreferrer" className="block text-white/80 hover:text-white">
+                <a
+                  href={cfg.socialLinks.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-white/80 transition-colors hover:text-white"
+                >
                   LinkedIn
                 </a>
               )}
             </div>
 
-            <div>
-              <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mb-3">
-                Website Team
-              </div>
-              <div className="space-y-1 text-white/80">
-                {HACKMITTEN_EVENT.websiteTeam.map((member) => (
-                  <div key={member}>{member}</div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Bottom bar: copyright + college logo */}
-        <div className="mt-12 md:mt-16 pt-6 md:pt-8 border-t border-white/5 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        {/* ================= BOTTOM BAR ================= */}
+        <div className="mt-12 flex flex-col gap-6 border-t border-white/5 pt-6 md:mt-16 md:flex-row md:items-end md:justify-between md:pt-8">
+
+          {/* Copyright */}
           <div>
             <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8]">
-              © {new Date().getFullYear()} {cfg?.eventName || "Hackmitten"} · All Rights Reserved
+              © {new Date().getFullYear()}{" "}
+              {cfg?.eventName || "Hackmitten"} · All Rights Reserved
             </div>
-            <div className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8] mt-1">
+
+            <div className="mono mt-1 text-[10px] uppercase tracking-widest text-[#A8A8A8]">
               Black is the universe · White is information · Red is energy
             </div>
           </div>
 
-          {/* College logo at the extreme bottom */}
-          <div className="flex flex-col items-start md:items-end gap-2">
+          {/* College Logo */}
+          <div className="flex flex-col items-start gap-2 md:items-end">
             <div className="mono text-[9px] uppercase tracking-widest text-[#A8A8A8]/60">
-              {cfg?.collegeName || "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA"}
+              {cfg?.collegeName ||
+                "MAHARAJA INSTITUTE OF TECHNOLOGY THANDAVAPURA"}
             </div>
-            {(cfg?.collegeLogoUrl || "/images/branding/mitt-logo.png") ? (
-              <img
-                src={cfg?.collegeLogoUrl || "/images/branding/mitt-logo.png"}
-                alt="MIT Thandavapura logo"
-                className="h-10 md:h-12 w-auto object-contain opacity-100"
-              />
-            ) : (
-              <div className="h-10 md:h-12 px-4 flex items-center justify-center rounded border border-white/10 bg-[#080808]">
-                <span className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8]">
-                  MIT THANDAVAPURA
-                </span>
-              </div>
-            )}
+
+            <img
+              src={
+                cfg?.collegeLogoUrl ||
+                "/images/branding/mitt-logo.png"
+              }
+              alt="MIT Thandavapura logo"
+              className="h-10 w-auto object-contain opacity-100 md:h-12"
+            />
           </div>
+
         </div>
       </div>
     </footer>

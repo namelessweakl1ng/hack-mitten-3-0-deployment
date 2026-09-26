@@ -182,10 +182,6 @@ model Participant {
   phone         String
   college       String
   degree        String?
-  passportImagePath String?
-  passportImageName String?
-  passportImageMimeType String?
-  passportImageSizeBytes Int?
   isLeader      Boolean  @default(false)
   // Generated only after team approval
   participantId String?  @unique

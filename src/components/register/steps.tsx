@@ -154,51 +154,11 @@ export function StepTeam() {
 export function StepMembers() {
   const { members, setMember, addMember, removeMember, next, prev } = useRegisterStore();
 
-  const uploadPassport = async (memberIndex: number, file: File | null) => {
-    if (!file) {
-      setMember(memberIndex, {
-        passportImagePath: "",
-        passportImageName: "",
-        passportImageMimeType: "",
-        passportImageSizeBytes: 0,
-      });
-      return;
-    }
-
-    const form = new FormData();
-    form.append("file", file);
-
-    try {
-      const res = await fetch("/api/uploads/passport", {
-        method: "POST",
-        body: form,
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Passport upload failed");
-      setMember(memberIndex, {
-        passportImagePath: json.file?.path ?? "",
-        passportImageName: json.file?.fileName ?? file.name,
-        passportImageMimeType: json.file?.mimeType ?? file.type,
-        passportImageSizeBytes: json.file?.sizeBytes ?? file.size,
-      });
-    } catch (error) {
-      setMember(memberIndex, {
-        passportImagePath: "",
-        passportImageName: "",
-        passportImageMimeType: "",
-        passportImageSizeBytes: 0,
-      });
-      window.alert(error instanceof Error ? error.message : "Passport upload failed");
-    }
-  };
-
   const memberValid = (m: typeof members[0]) =>
     m.fullName.trim().length >= 2 &&
     m.email.toLowerCase().trim().endsWith("@gmail.com") &&
     /^[6-9][0-9]{9}$/.test(m.phone.trim()) &&
-    m.college.trim().length >= 2 &&
-    m.degree.trim().length >= 2 &&
-    m.passportImagePath.trim().length > 0;
+    m.college.trim().length >= 2;
 
   const allValid = members.every(memberValid);
   const emails = members.map((m) => m.email.toLowerCase().trim());
@@ -260,27 +220,6 @@ export function StepMembers() {
                     value={m.degree}
                     onChange={(v) => setMember(i, { degree: v })}
                   />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block">
-                    <span className="mono text-[10px] uppercase tracking-widest text-[#A8A8A8]">
-                      Passport Photo
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null;
-                        void uploadPassport(i, file);
-                      }}
-                      className="mt-2 block w-full text-xs md:text-sm text-[#A8A8A8] file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#B52A32] file:text-white file:text-xs file:font-semibold file:cursor-pointer hover:file:bg-[#D83A43] cursor-pointer"
-                    />
-                    {m.passportImageName && (
-                      <div className="mt-2 text-xs text-[#A8A8A8]">
-                        Uploaded: {m.passportImageName} ({Math.round((m.passportImageSizeBytes || 0) / 1024)} KB)
-                      </div>
-                    )}
-                  </label>
                 </div>
               </div>
 

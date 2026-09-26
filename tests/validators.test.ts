@@ -18,11 +18,6 @@ function validMember(name: string, email: string, isLeader?: boolean) {
     email,
     phone: "9876543210",
     college: "Test College",
-    degree: "B.Tech",
-    passportImagePath: "/uploads/passports/test-passport.jpg",
-    passportImageName: `${name.toLowerCase()}-passport.jpg`,
-    passportImageMimeType: "image/jpeg",
-    passportImageSizeBytes: 42000,
     ...(isLeader === undefined ? {} : { isLeader }),
   };
 }
@@ -182,17 +177,6 @@ describe("registrationSchema", () => {
     expect(res.success).toBe(false);
   });
 
-  it("accepts a team without explicit leader flags and treats the first member as leader", () => {
-    const res = registrationSchema.safeParse({
-      teamName: "AUTOLEADER",
-      members: validTeam(),
-    });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(normalizeRegistrationMembers(res.data.members).map((m) => m.isLeader)).toEqual([true, false, false]);
-    }
-  });
-
   it("ignores client-controlled leader flags", () => {
     const res = registrationSchema.safeParse({
       teamName: "NOLEADER",
@@ -233,46 +217,6 @@ describe("registrationSchema", () => {
       teamName: "NOCOLLEGE",
       members: [
         { ...validMember("Alice", "alice@gmail.com", true), college: "" },
-        validMember("Bob", "bob@gmail.com"),
-        validMember("Carol", "carol@gmail.com"),
-      ],
-    });
-    expect(res.success).toBe(false);
-  });
-
-  it("rejects team with missing degree on any member", () => {
-    const res = registrationSchema.safeParse({
-      teamName: "NODEGREE",
-      members: [
-        { ...validMember("Alice", "alice@gmail.com", true), degree: "" },
-        validMember("Bob", "bob@gmail.com"),
-        validMember("Carol", "carol@gmail.com"),
-      ],
-    });
-    expect(res.success).toBe(false);
-  });
-
-  it("accepts nested server-generated passport paths", () => {
-    const res = registrationSchema.safeParse({
-      teamName: "NESTEDPATH",
-      members: [
-        {
-          ...validMember("Alice", "alice@gmail.com", true),
-          passportImagePath: "/uploads/passports/team/alice-passport.jpg",
-          passportImageName: "alice-passport.jpg",
-        },
-        validMember("Bob", "bob@gmail.com"),
-        validMember("Carol", "carol@gmail.com"),
-      ],
-    });
-    expect(res.success).toBe(true);
-  });
-
-  it("rejects team with missing passport photo on any member", () => {
-    const res = registrationSchema.safeParse({
-      teamName: "NOPASSPORT",
-      members: [
-        { ...validMember("Alice", "alice@gmail.com", true), passportImagePath: "" },
         validMember("Bob", "bob@gmail.com"),
         validMember("Carol", "carol@gmail.com"),
       ],

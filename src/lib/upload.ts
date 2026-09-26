@@ -160,14 +160,22 @@ async function storeInBucket(bucket: string, file: File, prefix: string, maxByte
     throw new UploadError("Invalid generated storage path");
   }
 
+  if (isVercelRuntime() && !supabaseStorageConfigured()) {
+    throw new UploadError(`Production upload requires Supabase Storage configuration for ${bucket}. Set SUPABASE_URL and SUPABASE_SECRET_KEY.`);
+  }
+
   if (supabaseStorageConfigured()) {
     try {
       return await uploadToSupabase(bucket, objectPath, file, detectedType);
     } catch {
       if (isVercelRuntime()) {
-        throw new UploadError("Storage upload failed. Check Supabase configuration.");
+        throw new UploadError(`Storage upload failed for ${bucket}. Check Supabase configuration.`);
       }
     }
+  }
+
+  if (isVercelRuntime()) {
+    throw new UploadError(`Production upload requires Supabase Storage for ${bucket}.`);
   }
 
   return saveToLocal(file, bucket, objectPath, detectedType);

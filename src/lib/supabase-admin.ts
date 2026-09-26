@@ -3,21 +3,21 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
-if (!supabaseUrl) {
-  throw new Error("SUPABASE_URL is not configured");
+export function hasSupabaseStorageConfig(): boolean {
+  return Boolean(supabaseUrl && supabaseSecretKey);
 }
 
-if (!supabaseSecretKey) {
-  throw new Error("SUPABASE_SECRET_KEY is not configured");
-}
+export const supabaseAdmin = hasSupabaseStorageConfig()
+  ? createClient(supabaseUrl!, supabaseSecretKey!, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  : null;
 
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseSecretKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-);
+export function assertSupabaseStorageConfigured(): void {
+  if (!hasSupabaseStorageConfig()) {
+    throw new Error("SUPABASE_URL and SUPABASE_SECRET_KEY must be configured for Supabase Storage");
+  }
+}

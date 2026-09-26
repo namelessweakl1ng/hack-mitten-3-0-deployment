@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { COORDINATORS } from "@/data/coordinators";
 import { DEVELOPING_TEAM } from "@/data/developing-team";
+
 type Coordinator = {
   id: string;
   name: string;
@@ -55,17 +56,21 @@ export function Coordinators() {
           isLead: c.isLead ?? false,
         }));
 
-  // ============================================================
-  // FACULTY FIRST
-  // ============================================================
+  /*
+   * ============================================================
+   * FACULTY
+   * ============================================================
+   */
 
   const faculty = coordinators.filter(
     (coordinator) => coordinator.type === "FACULTY"
   );
 
-  // ============================================================
-  // STUDENTS SECOND
-  // ============================================================
+  /*
+   * ============================================================
+   * STUDENTS
+   * ============================================================
+   */
 
   const students = coordinators
     .filter((coordinator) => coordinator.type === "STUDENT")
@@ -79,6 +84,10 @@ export function Coordinators() {
 
       return 0;
     });
+
+  /*
+   * Don't hide the section if only the developing team exists.
+   */
 
   if (coordinators.length === 0 && DEVELOPING_TEAM.length === 0) {
     return null;
@@ -116,7 +125,6 @@ export function Coordinators() {
         coordinators={faculty}
       />
 
-      {/* Space */}
       <div className="h-16 md:h-20" />
 
       {/* ===================================================== */}
@@ -128,7 +136,6 @@ export function Coordinators() {
         coordinators={students}
       />
 
-      {/* Space */}
       <div className="h-16 md:h-20" />
 
       {/* ===================================================== */}
@@ -265,7 +272,7 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
             </div>
           )}
 
-          {/* Dark gradient */}
+          {/* Gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-transparent" />
 
           {/* Lead badge */}
@@ -298,7 +305,6 @@ function CoordinatorCard({ c }: { c: Coordinator }) {
             </div>
           )}
 
-          {/* Mobile contact */}
           {hasContact && (
             <div className="mt-2 flex items-center gap-1 font-mono text-[8px] uppercase tracking-widest text-[#B52A32] sm:hidden">
               Contact
@@ -377,7 +383,7 @@ function DevelopingTeam() {
               {member.image ? (
                 <img
                   src={member.image}
-                  alt={member.name}
+                  alt={`${member.name} - ${member.role}`}
                   loading="lazy"
                   className="absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
                 />

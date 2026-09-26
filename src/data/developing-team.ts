@@ -35,8 +35,8 @@ export const DEVELOPING_TEAM: DevelopingTeamMember[] = [
   },
   {
     id: "developer-4",
-    name: "Person 4",
-    role: "Developer",
+    name: "Harshith H R",
+    role: "Design & Content",
     image: "/images/developers/person4.png",
     phone: "8296338351",
   },
